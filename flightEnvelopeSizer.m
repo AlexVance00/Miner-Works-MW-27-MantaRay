@@ -58,3 +58,13 @@ end
 result = [];
 
 % Display Results and/or Plotting
+
+%%%%%%%%%%%%%%
+% data will be a struct type
+% data will have fieldnames
+%   a_0         : lift curve slope   
+%   alpha_L0    : zero lift angle of attack
+%   
+%   
+%   
+%   
