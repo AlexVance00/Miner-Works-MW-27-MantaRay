@@ -31,7 +31,7 @@
 %        3, 0.5;
 %        ...]
 
-configFile = "airfoils.txt";
+configFile = "airfoils.txt"; % Sample comment
 configName = "NACA24_9019";
 
 % Data read-in
