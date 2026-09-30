@@ -68,3 +68,12 @@ result = [];
 %   
 %   
 %   
+
+configFile = "airfoils.txt";
+
+configName = "NACA24_9019";
+
+data = GetConfigData(configFile, configName);
+
+a = data.a;
+alpha_L0 = data.alpha_L0;
