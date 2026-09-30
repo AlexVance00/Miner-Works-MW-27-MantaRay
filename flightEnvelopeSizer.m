@@ -1,8 +1,5 @@
-% <Function Purpose>
+% <Script Purpose>
 %                                                     <Output> in (<Units>)
-% -------------------------------------------------------------------------
-% Arguments
-%   #) <Symbol> = <Explanation> (<Units>)
 % -------------------------------------------------------------------------
 % Dependencies
 %   #) <Dependency Filepath>
@@ -16,64 +13,31 @@
 % MATLAB Version <Oldest Version>, also compatible with:
 %   - <Later Version>
 % -------------------------------------------------------------------------
-% Developed by Alex Vance (AlexVance00 on Github)
+% Developed by Alex Vance (AlexVance00 on Github) and Adrien Hartman
+% (adrienh01 on Github)
 % -------------------------------------------------------------------------
 
-% Allows arguments to be optional and assigned in the function call
-%   as in: FunctionTemplate(<arg_name> = <arg_val>, ...)
-
-% List all argument names
-arguments
-    args.arg_1 = [];
-end
-arg_name_list = fieldnames(args);
-
-% List those argument names which are optional in 1D string array
-optional_arg_names = [];
-
-% Makes variables out of args' fieldnames
-for i_fieldname = 1:length(arg_name_list)
-    arg_name = arg_name_list{i_fieldname};
-    arg_val = args.(arg_name);
-
-    % Input Checking
-    % Checks if this argument was assigned
-    if ~isempty(arg_val)
-
-        % Initializes assigned arguments
-        eval(append(arg_name, " = arg_val;"));
-    % If argument was unassigned, checks if it was optional
-    elseif ~ismember(arg_name, optional_arg_names)
-        
-        % If unassigned argument was non-optional, throws error
-        error("No input for non-optional '%s' argument", arg_name);
-    end
-end
-
-% Unit Conversions
-
-% Intermediate Calculations
-
-% Final Calculations
-result = [];
-
-% Display Results and/or Plotting
-
-%%%%%%%%%%%%%%
-% data will be a struct type
-% data will have fieldnames
+% INFORMATION FOR CONFIG READ-IN
+% "data" will be a struct type
+% data will have fieldnames:
 %   a_0         : lift curve slope   
 %   alpha_L0    : zero lift angle of attack
-%   
-%   
-%   
-%   
+%   c_d         : 100-element 2D array of [alpha, c_d], where alpha is a
+%       100 element 1D column vector of angle of attack values, and c_d is
+%       a 100 element 1D column vector of 2D drag coefficient values
+%       e.g.:
+%       [1, 0.2;
+%        2, 0.3;
+%        3, 0.5;
+%        ...]
 
 configFile = "airfoils.txt";
-
 configName = "NACA24_9019";
 
+% Data read-in
 data = GetConfigData(configFile, configName);
 
-a = data.a;
-alpha_L0 = data.alpha_L0;
+% Variable assignments
+% a = data.a;
+% alpha_L0 = data.alpha_L0;
+% c_d = data.c_d;
