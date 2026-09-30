@@ -36,7 +36,7 @@ configName = "NACA24_9019";
 
 % Data read-in
 data = GetConfigData(configFile, configName);
-
+%Start here
 % Variable assignments
 % a = data.a;
 % alpha_L0 = data.alpha_L0;
