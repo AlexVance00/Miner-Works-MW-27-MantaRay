@@ -41,3 +41,5 @@ data = GetConfigData(configFile, configName);
 % a = data.a;
 % alpha_L0 = data.alpha_L0;
 % c_d = data.c_d;
+
+% Test 1
