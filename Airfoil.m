@@ -20,7 +20,7 @@
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef Airfoil
 
-    properties
+    properties (SetAccess = private)
         a_0 % 2D lift curve slope (radians^-1)
         alpha_L0 % zero lift angle of attack (radians)
         c_d struct % 2D drag coefficient curve vs AoA

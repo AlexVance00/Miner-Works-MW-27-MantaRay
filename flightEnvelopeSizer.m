@@ -21,33 +21,11 @@
 % -------------------------------------------------------------------------
 
 % INFORMATION FOR CONFIG READ-IN
-% "data" will be a struct
-% data will have fieldnames:
-%   a_0:        2D lift curve slope   
-%   alpha_L0:   zero lift angle of attack
-%   c_d:        struct with fieldnames "alpha" and "c_d" where alpha is a
-%                   100 element 1D column vector of angle of attack values,
-%                   and c_d is a 100 element 1D column vector of 2D drag
-%                   coefficient values
-%
-%   e.g.:
-%   data.c_d.alpha =    <100 element 1D column vector of angle of attack
-%                           values>
-%   data.c_d.c_d =      <100 element 1D column vector of 2D drag
-%                           coefficient values>
+% Look at Airfoil.m for how to read its properties
 
 clc
 clear
 close all
-
-% Only change if you rename the folder where the tabulated c_d values are
-% for each airfoil config. This assumes these tabulated value files are in
-% a subfolder of the current working directory/folder this script is in
-airfoild_c_d_values_folder = "Tabulated Airfoil c_d Values";
-addpath(pwd + "\" + airfoild_c_d_values_folder);
-% Only change if you rename the file where the airfoil data configs are
-% stored
-configFile = "airfoil_data.txt";
 
 % Estimates to gauge Reynold's and Mach Numbers, for XFLR5 analysis
 % parameters
@@ -86,7 +64,7 @@ clear c u mu rho nu Re T gammay R_air a M
 configName = "NACA2412";
 
 % Data read-in
-data = GetConfigData(configFile = configFile, configName = configName);
+airfoil = Airfoil(configName);
 %Start here
 % Variable assignments
 % a = data.a;
