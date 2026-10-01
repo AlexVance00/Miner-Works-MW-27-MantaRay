@@ -1,0 +1,39 @@
+---------------------
+Airfoil Data Configs.
+---------------------
+BEGIN INSTRUCTIONS
+1) Read the variable descriptions below:
+	a_0:			2D lift curve slope,					(1/Radians)
+	alpha_L0:		airfoil zero lift angle of attack,			(Radians)
+	c_d:			2D drag coefficients for various angles of attack	(~)
+	
+2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
+	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
+	variable, choose "<filename>" except replace <filename> with the filename of a .xlsx file that
+	stores those tabulated values. Go to tabulatedValuesTemplate.xlsx to see an example format of
+	how to set one of those up. If the values are more complicated than that and are dependent on a
+	correlation, perhaps from some research paper, choose "correlation", and that will indicate the
+	correlation is stored in that specific configs. subclass in MATLAB.
+
+\EXAMPLE\
+exampleVariableName1 = exampleValue
+exampleVariableName2 = exampleValue
+\end\
+
+3) Separate material configs. as shown below
+
+\CONFIG1\
+<properties>
+\END\
+
+\CONFIG2\
+<properties>
+\END\
+
+END INSTRUCTIONS
+%
+\NACA2412\
+a_0 = 0.1
+alpha_L0 = -0.5
+c_d = "NACA2412.xlsx"
+\END\
