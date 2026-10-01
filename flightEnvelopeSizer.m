@@ -81,7 +81,8 @@ fprintf("Estimated Mach Number: %.5f\n\n", M);
 % Clear variables so they don't mess with later work
 clear c u mu rho nu Re T gammay R_air a M
 
-% Change to work with a different airfoil config, or add multiple
+% Change to work with a different airfoil config, or add multiple in an
+% array
 configName = "NACA2412";
 
 % Data read-in
