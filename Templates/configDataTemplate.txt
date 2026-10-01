@@ -1,0 +1,36 @@
+------------------------
+<Datatype> Data Configs.
+------------------------
+BEGIN INSTRUCTIONS
+1) Read the variable descriptions below:
+	exampleVariableName1:		Description,		(Units)
+	exampleVariableName2:		Description,		(Units)
+	
+2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
+	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
+	variable, choose "<filename>" except replace <filename> with the filename of a .xlsx file that
+	stores those tabulated values. Go to tabulatedValuesTemplate.xlsx to see an example format of
+	how to set one of those up. If the values are more complicated than that and are dependent on a
+	correlation, perhaps from some research paper, choose "correlation", and that will indicate the
+	correlation is stored in that specific configs. subclass in MATLAB.
+
+\EXAMPLE\
+exampleVariableName1 = exampleValue
+exampleVariableName2 = exampleValue
+\end\
+
+3) Separate material configs. as shown below
+
+\CONFIG1\
+<properties>
+\END\
+
+\CONFIG2\
+<properties>
+\END\
+
+END INSTRUCTIONS
+%
+\CONFIG1\
+<properties>
+\END\
