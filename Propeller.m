@@ -1,7 +1,9 @@
-% <Class Purpose>
+% Stores propeller data. Initialized with a configName input, which it uses
+% to search the configFile for what data to pull.
 % -------------------------------------------------------------------------
 % Dependencies
-%   #) <Dependency>
+%   1) propeller_data.txt
+%   2) GetConfigData.m
 % -------------------------------------------------------------------------
 % Assumptions
 %   #) <Assumption>
@@ -19,13 +21,66 @@
 %   - <Later Version>
 % -------------------------------------------------------------------------
 % Developed by Alex Vance (AlexVance00 on Github)
-classdef ClassTemplate
+classdef Propeller
 
-    properties
-
+    properties (SetAccess = private)
+        name % the propeller name/classification
+        data % Temporary
     end
 
     methods (Access = public)
+
+        % Constructor
+        function obj = Propeller(configName)
+            if nargin == 0
+                return;
+            end
+
+            if ~isstring(configName)
+                if ~ischar(configName)
+                    error("Passed ""%s"" argument must be string or char types, but was passed as %s", configName, class(configName));
+                else
+                    configName = string(configName); % Useful for later when numel() and size() are used
+                end
+            end
+
+            configFile = "propeller_data.txt";
+            configFileSearchMatches = dir(fullfile(pwd, "**", configFile));
+            % Check if no matches
+            if isempty(configFileSearchMatches)
+                error("Config file ""%s"" not found in working directory ""%s""\n", configFile, pwd);
+            end
+            % If there's a match, continue
+            configFilePath = fullfile(configFileSearchMatches(1).folder, configFileSearchMatches(1).name);
+
+            % Can assume what data will be in there because we know what
+            % will be in the hardcoded configFile variables list
+            numConfigNames = numel(configName);
+            % If numConfigNames is not 1, flag there as being multiple and
+            % preallocate array of obj types for speed's sake
+            flagMultipleConfigNames = false;
+            if numConfigNames ~= 1
+                flagMultipleConfigNames = true;
+                obj(numConfigNames) = Propeller();
+            end
+            % Assign each obj type's properties values from data's fields
+            for i = 1:numConfigNames
+                thisConfigName = configName(i);
+                data = GetConfigData(configFile = configFilePath, configName = thisConfigName);
+                obj.data = data;                
+            end
+
+            % Make sure array of obj type is same size as configName, if
+            % it's not 1
+            if flagMultipleConfigNames
+                obj = reshape(obj, size(configName));
+            end
+
+            return;
+        end
+    end
+    
+    methods (Access = private)
 
         function result = FunctionTemplate(args)
         % <Function Purpose>

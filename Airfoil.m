@@ -14,8 +14,8 @@
 % Nomenclature
 %   <Symbol> = <Meaning> (<Units>)
 % -------------------------------------------------------------------------
-% Document Version 1.0, former versions:
-%   - <Later Version>
+% Document Version 1.0, earlier versions:
+%   - <Version>
 % -------------------------------------------------------------------------
 % MATLAB Version <Oldest Version>, also compatible with:
 %   - <Later Version>
@@ -55,7 +55,6 @@ classdef Airfoil
             end
             % If there's a match, continue
             configFilePath = fullfile(configFileSearchMatches(1).folder, configFileSearchMatches(1).name);
-            data = GetConfigData(configFile = configFilePath, configName = configName);
             
             % Can assume what data will be in there because we know what
             % will be in the hardcoded configFile variables list
@@ -66,10 +65,11 @@ classdef Airfoil
             if numConfigNames ~= 1
                 flagMultipleConfigNames = true;
                 obj(numConfigNames) = Airfoil();
-            else
             end
             % Assign each obj type's properties values from data's fields
             for i = 1:numConfigNames
+                thisConfigName = configName(i);
+                data = GetConfigData(configFile = configFilePath, configName = thisConfigName);
                 obj(i).name = data.name;
                 obj(i).a_0 = data.a_0;
                 obj(i).alpha_L0 = data.alpha_L0;
@@ -87,10 +87,10 @@ classdef Airfoil
                         alpha = obj(i).c_d.alpha;
                         obj(i).c_l = struct("alpha", alpha, "c_l", Getc_l(alpha));
                     else
-                        error("Invalid string type value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data.c_l, configName(i), configFile);
+                        error("Invalid string type value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data.c_l, thisConfigName, configFile);
                     end
                 else
-                    error("Invalid value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data.c_l, configName(i), configFile);
+                    error("Invalid value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data.c_l, thisConfigName, configFile);
                 end
             end
             % Make sure array of obj type is same size as configName, if

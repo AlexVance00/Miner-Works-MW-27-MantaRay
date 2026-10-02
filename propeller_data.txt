@@ -1,13 +1,10 @@
----------------------
-Airfoil Data Configs.
----------------------
+-----------------------
+Propeller Data Configs.
+-----------------------
 BEGIN INSTRUCTIONS
 1) Read the variable descriptions below:
-	name:			airfoil name (string),					(~)
-	a_0:			2D lift curve slope,					(1/Radians)
-	alpha_L0:		airfoil zero lift angle of attack,			(Radians)
-	c_d:			2D drag coefficients for various angles of attack	(~)
-	c_l:			2D lift coefficients for various angles of attack	(~)
+	exampleVariableName1:		Description,		(Units)
+	exampleVariableName2:		Description,		(Units)
 	
 2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
 	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
@@ -34,18 +31,6 @@ exampleVariableName2 = exampleValue
 
 END INSTRUCTIONS
 %
-\NACA2412\
-name = "NACA2412"
-a_0 = 5.78
-alpha_L0 = -0.0405
-c_d = "NACA2412_c_d.xlsx"
-c_l = "NACA2412_c_l.xlsx"
-\END\
-
-\CONFIG2\
-name = "NACA2412"
-a_0 = 5.78
-alpha_L0 = -0.0405
-c_d = "NACA2412_c_d.xlsx"
-c_l = "NACA2412_c_l.xlsx"
+\CONFIG1\
+<properties>
 \END\
