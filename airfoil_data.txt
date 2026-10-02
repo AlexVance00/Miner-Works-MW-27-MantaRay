@@ -3,7 +3,6 @@ Airfoil Data Configs.
 ---------------------
 BEGIN INSTRUCTIONS
 1) Read the variable descriptions below:
-	name:			airfoil name (string),					(~)
 	a_0:			2D lift curve slope,					(1/Degrees)
 	alpha_L0:		airfoil zero lift angle of attack,			(Degrees)
 	c_d:			2D drag coefficients for various angles of attack	(~)
@@ -35,7 +34,6 @@ exampleVariableName2 = exampleValue
 END INSTRUCTIONS
 %
 \NACA2412\
-name = "NACA2412"
 a_0 = 0.1009
 alpha_L0 = -2.320
 c_d = "NACA2412_c_d.xlsx"

@@ -20,16 +20,16 @@
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef Airfoil
 
+    properties (Constant)
+        configFile = "airfoil_data.txt";
+    end
+
     properties (SetAccess = private)
         name % the airfoil name/classification
         a_0 % 2D lift curve slope, string (degrees^-1)
         alpha_L0 % zero lift angle of attack, numeric (degrees)
         c_d struct % 2D drag coefficient curve vs AoA, struct (alpha field has units of degrees)
         c_l struct % 2D lift coefficient curve vs AOA, struct (alpha field has units of degrees)
-    end
-
-    properties (Constant)
-        configFile = "airfoil_data.txt";
     end
 
     methods (Access = public)
@@ -55,33 +55,21 @@ classdef Airfoil
             end
 
             configFile = Airfoil.configFile;
-            % Search MATLAB path for configFile, store matches
-            configFileSearchMatches = dir(fullfile(pwd, "**", configFile));
-
-            % Check if no matches were found
-            if isempty(configFileSearchMatches)
-                % If none were found, throw error- it needs to be found
-                error("Config file ""%s"" not found in working directory ""%s""\n", configFile, pwd);
-            end
-
-            % If there's a match, continue. Use first match found, ignore
-            % dupes
-            configFilePath = fullfile(configFileSearchMatches(1).folder, configFileSearchMatches(1).name);
             
             % Can assume what data will be in there because we know what
             % will be in the hardcoded configFile variables list
             % Get number of config names passed- configName could be an
             % array, this is vectorized
-            numConfigNames = numel(configName);
+            data = GetConfigData(configFile = configFile, configName = configName);
 
             % If numConfigNames is not 1, flag there as being multiple and
             % preallocate array of obj types for speed's sake
+            numConfigNames = numel(configName);
             flagMultipleConfigNames = false;
             if numConfigNames ~= 1
                 flagMultipleConfigNames = true;
                 obj(numConfigNames) = Airfoil();
             end
-            data = GetConfigData(configFile = configFilePath, configName = thisConfigName);
 
             % Assign obj properties values from data's fields for each
             % config name passed
@@ -90,7 +78,7 @@ classdef Airfoil
 
                 % This is where the assumptions about each config's
                 % variables is useful
-                obj(i).name = data(i).name;
+                obj(i).name = thisConfigName;
                 obj(i).a_0 = data(i).a_0;
                 obj(i).alpha_L0 = data(i).alpha_L0;
 
