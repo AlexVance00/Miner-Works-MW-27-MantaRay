@@ -14,6 +14,9 @@
 % Nomenclature
 %   <Symbol> = <Meaning> (<Units>)
 % -------------------------------------------------------------------------
+% Document Version 1.0, former versions:
+%   - <Later Version>
+% -------------------------------------------------------------------------
 % MATLAB Version <Oldest Version>, also compatible with:
 %   - <Later Version>
 % -------------------------------------------------------------------------
@@ -21,6 +24,7 @@
 classdef Airfoil
 
     properties (SetAccess = private)
+        name % the airfoil name/classification
         a_0 % 2D lift curve slope (radians^-1)
         alpha_L0 % zero lift angle of attack (radians)
         c_d struct % 2D drag coefficient curve vs AoA
@@ -29,6 +33,7 @@ classdef Airfoil
 
     methods (Access = public)
 
+        % Constructor
         function obj = Airfoil(configName)
             if nargin == 0
                 return;
@@ -65,11 +70,28 @@ classdef Airfoil
             end
             % Assign each obj type's properties values from data's fields
             for i = 1:numConfigNames
+                obj(i).name = data.name;
                 obj(i).a_0 = data.a_0;
                 obj(i).alpha_L0 = data.alpha_L0;
                 obj(i).c_d = data.c_d;
-                obj(i).c_l = struct("alpha", obj(i).c_d.alpha, ...
-                                    "c_l", obj(i).a_0 .* (obj(i).c_d.alpha - obj(i).alpha_L0));
+                % Check if data.c_l is a struct
+                if isstruct(data.c_l)
+                    % If so, pull that struct from data, which
+                    % GetConfigData() returned
+                    obj(i).c_l = data.c_l;
+                elseif isstring(data.c_l)
+                    if data.c_l == "flagCorrelation"
+                        % If not, check if value was "flagCorrelation" and
+                        % call correlation method
+    
+                        alpha = obj(i).c_d.alpha;
+                        obj(i).c_l = struct("alpha", alpha, "c_l", Getc_l(alpha));
+                    else
+                        error("Invalid string type value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data.c_l, configName(i), configFile);
+                    end
+                else
+                    error("Invalid value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data.c_l, configName(i), configFile);
+                end
             end
             % Make sure array of obj type is same size as configName, if
             % it's not 1
@@ -79,58 +101,16 @@ classdef Airfoil
 
             return
         end
+    end
 
-        function result = FunctionTemplate(args)
-        % <Function Purpose>
-        %                                             <Output> in (<Units>)
+    methods (Access = private)
+
+        %
+        function c_l = Getc_l(alpha)
+        % Calculates c_l based on alpha using airfoil object properties
         % -----------------------------------------------------------------
-        % Arguments
-        %   <Symbol> = <Explanation> (<Units>)
-        % -----------------------------------------------------------------
-        
-            % Allows arguments to be optional and assigned in the function
-            %   call as in: FunctionTemplate(<arg_name> = <arg_val>, ...)
-        
-            % List all argument names
-            arguments
-                args.arg_1 = [];
-            end
-            arg_name_list = fieldnames(args);
-        
-            % List those argument names which are optional in 1D string
-            %   array
-            optional_arg_names = [];
-        
-            % Makes variables out of args' fieldnames
-            for i_fieldname = 1:length(arg_name_list)
-                arg_name = arg_name_list{i_fieldname};
-                arg_val = args.(arg_name);
-        
-                % Input Checking
-                % Checks if this argument was assigned
-                if ~isempty(arg_val)
-        
-                    % Initializes assigned arguments
-                    eval(append(arg_name, " = arg_val;"));
-                % If argument was unassigned, checks if it was optional
-                elseif ~ismember(arg_name, optional_arg_names)
-                    
-                    % If unassigned argument was non-optional, throws error
-                    error("No input for non-optional '%s' argument", ...
-                        arg_name);
-                end
-            end
-        
-            % Unit Conversions
-        
-            % Intermediate Calculations
-        
-            % Final Calculations
-        
-            % Display Results and/or Plotting
-        
+            c_l = obj.a_0 .* (alpha - obj.alpha_L0);
             return;
         end
-
     end
 end

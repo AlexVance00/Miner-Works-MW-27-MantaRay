@@ -19,6 +19,9 @@ function data = GetConfigData(args)
 % Sources
 %   #) <Source>
 % -------------------------------------------------------------------------
+% Document Version 1.0, former versions:
+%   - <Later Version>
+% -------------------------------------------------------------------------
 % MATLAB Version <Oldest Version>, also compatible with:
 %   - <Later Version>
 % -------------------------------------------------------------------------
@@ -125,9 +128,12 @@ function data = GetConfigData(args)
                 if ~isempty(fileSearchMatches)
                     % If the string was a filename, read in its contents
                     cellData = readcell(fullfile(fileSearchMatches(1).folder, fileSearchMatches(1).name));
-                    cellDataStringVersion = string(cellData);
                     structFieldnames = cellData(1, :);
-                    numColumns = size(cellData, 2);
+                    % Check if any elements in first row are empty- this
+                    % sometimes happens when excel stores empty characters
+                    % in cells that used to have values but don't anymore
+                    structFieldnames = structFieldnames(~ismissing(structFieldnames));
+                    numColumns = numel(structFieldnames);
                     % For this varName struct, make a field for each value in
                     % structFieldnames, and assign the values under it in that
                     % column in cellData to that field
@@ -142,10 +148,8 @@ function data = GetConfigData(args)
                     % initialize/overwrite this value by running its
                     % correlation method for this variable.
                     data(i).(varName) = "flagCorrelation";
-                % If the string was not a filename or "correlation", throw
-                % error
                 else
-                    error("Invalid string type value assigned to ""%s"" variable: ""%s""\n", varName, lastValue);
+                    data(i).(varName) = lastValue;
                 end
             end
         end
