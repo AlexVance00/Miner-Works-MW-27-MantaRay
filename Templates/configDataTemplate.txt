@@ -19,7 +19,7 @@ exampleVariableName1 = exampleValue
 exampleVariableName2 = exampleValue
 \end\
 
-3) Separate material configs. as shown below
+3) Separate configs. as shown below
 
 \CONFIG1\
 <properties>
