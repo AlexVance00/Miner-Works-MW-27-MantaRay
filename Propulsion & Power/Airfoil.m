@@ -3,19 +3,20 @@
 % -------------------------------------------------------------------------
 % Dependencies
 %   1) airfoil_data.txt
-%   2) GetConfigData.m
+%   2) GetConfigData.m Version 2.0
 % -------------------------------------------------------------------------
 % Assumptions
 %   #) <Assumption>
 % -------------------------------------------------------------------------
 % Comments
-%   1) Vectorized
+%   1) Vectorized. Pass in configName as an array and a same-sized array of
+%       Airfoil objects will be returned
 % -------------------------------------------------------------------------
 % Document Version 2.0, earlier versions:
 %   - 1.0
 % -------------------------------------------------------------------------
-% MATLAB Version R2024b, also compatible with:
-%   - <Version>
+% MATLAB Version R2025a, also compatible with:
+%   - R2024b
 % -------------------------------------------------------------------------
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef Airfoil
@@ -121,6 +122,7 @@ classdef Airfoil
                     error("Invalid value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data(i).c_l, thisConfigName, configFile);
                 end
             end
+            
             % Make sure array of obj type is same size as configName, if
             % it's not 1
             if flagMultipleConfigNames

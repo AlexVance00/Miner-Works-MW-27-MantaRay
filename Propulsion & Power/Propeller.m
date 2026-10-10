@@ -3,71 +3,81 @@
 % -------------------------------------------------------------------------
 % Dependencies
 %   1) propeller_data.txt
-%   2) GetConfigData.m
+%   2) GetConfigData.m Version 2.0
 % -------------------------------------------------------------------------
 % Assumptions
 %   #) <Assumption>
 % -------------------------------------------------------------------------
 % Comments
-%   #) <Comment>
+%   1) Vectorized. Pass in configName as an array and a same-sized array of
+%       Propeller objects will be returned
 % -------------------------------------------------------------------------
-% Nomenclature
-%   <Symbol> = <Meaning> (<Units>)
-% -------------------------------------------------------------------------
-% Document Version <Oldest Version>, earlier versions:
+% Document Version 1.0, earlier versions:
 %   - <Version>
 % -------------------------------------------------------------------------
-% MATLAB Version <Oldest Version>, also compatible with:
+% MATLAB Version R2025a, also compatible with:
 %   - <Later Version>
 % -------------------------------------------------------------------------
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef Propeller
 
+    properties (Constant)
+        configFile = "propeller_data.txt";
+    end
+
     properties (SetAccess = private)
         name % the propeller name/classification
-        data % Temporary
+        temp
     end
 
     methods (Access = public)
 
         % Constructor
         function obj = Propeller(configName)
+            % If no arguments were passed, just return empty Airfoil object
             if nargin == 0
                 return;
             end
 
+            % Check if configName was correctly passed as string
             if ~isstring(configName)
+                % Check if it was a char instead
                 if ~ischar(configName)
+                    % If not, it needs to be 1 or the other, so throw error
                     error("Passed ""%s"" argument must be string or char types, but was passed as %s", configName, class(configName));
                 else
+                    % If so, convert to string for ease later when using
+                    % numel() and size()
                     configName = string(configName); % Useful for later when numel() and size() are used
                 end
             end
 
-            configFile = "propeller_data.txt";
-            configFileSearchMatches = dir(fullfile(pwd, "**", configFile));
-            % Check if no matches
-            if isempty(configFileSearchMatches)
-                error("Config file ""%s"" not found in working directory ""%s""\n", configFile, pwd);
-            end
-            % If there's a match, continue
-            configFilePath = fullfile(configFileSearchMatches(1).folder, configFileSearchMatches(1).name);
+            configFile = Propeller.configFile;
 
             % Can assume what data will be in there because we know what
             % will be in the hardcoded configFile variables list
-            numConfigNames = numel(configName);
+            % Get number of config names passed- configName could be an
+            % array, this is vectorized
+            data = GetConfigData(configFile = configFile, configName = configName);
+
             % If numConfigNames is not 1, flag there as being multiple and
             % preallocate array of obj types for speed's sake
+            numConfigNames = numel(configName);
             flagMultipleConfigNames = false;
             if numConfigNames ~= 1
                 flagMultipleConfigNames = true;
-                obj(numConfigNames) = Propeller();
+                obj(numConfigNames) = Airfoil();
             end
-            % Assign each obj type's properties values from data's fields
+
+            % Assign obj properties values from data's fields for each
+            % config name passed
             for i = 1:numConfigNames
                 thisConfigName = configName(i);
-                data = GetConfigData(configFile = configFilePath, configName = thisConfigName);
-                obj.data = data;                
+
+                % This is where the assumptions about each config's
+                % variables is useful
+                obj(i).name = thisConfigName;
+                obj(i).temp = data(i).temp;
             end
 
             % Make sure array of obj type is same size as configName, if
@@ -79,65 +89,8 @@ classdef Propeller
             return;
         end
     end
-    
-    methods (Access = private)
-
-        function result = FunctionTemplate(args)
-        % <Function Purpose>
-        %                                             <Output> in (<Units>)
-        % -----------------------------------------------------------------
-        % Arguments
-        %   <Symbol> = <Explanation> (<Units>)
-        % -----------------------------------------------------------------
-        
-            % Allows arguments to be optional and assigned in the function
-            %   call as in: FunctionTemplate(<arg_name> = <arg_val>, ...)
-        
-            % List all argument names
-            arguments
-                args.arg_1 = [];
-            end
-            arg_name_list = fieldnames(args);
-        
-            % List those argument names which are optional in 1D string
-            %   array
-            optional_arg_names = [];
-        
-            % Makes variables out of args' fieldnames
-            for i_fieldname = 1:length(arg_name_list)
-                arg_name = arg_name_list{i_fieldname};
-                arg_val = args.(arg_name);
-        
-                % Input Checking
-                % Checks if this argument was assigned
-                if ~isempty(arg_val)
-        
-                    % Initializes assigned arguments
-                    eval(append(arg_name, " = arg_val;"));
-                % If argument was unassigned, checks if it was optional
-                elseif ~ismember(arg_name, optional_arg_names)
-                    
-                    % If unassigned argument was non-optional, throws error
-                    error("No input for non-optional '%s' argument", ...
-                        arg_name);
-                end
-            end
-        
-            % Unit Conversions
-        
-            % Intermediate Calculations
-        
-            % Final Calculations
-        
-            % Display Results and/or Plotting
-        
-            return;
-        end
-
-    end
 
     methods (Access = private)
 
     end
-
 end

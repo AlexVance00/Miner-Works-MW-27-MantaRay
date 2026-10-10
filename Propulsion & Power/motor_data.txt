@@ -3,7 +3,7 @@ Motor Data Configs.
 -------------------
 BEGIN INSTRUCTIONS
 1) Read the variable descriptions below:
-	exampleVariableName1:		Description,		(Units)
+	temp:				Description,		(Units)
 	exampleVariableName2:		Description,		(Units)
 	
 2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
@@ -32,5 +32,5 @@ exampleVariableName2 = exampleValue
 END INSTRUCTIONS
 %
 \CONFIG1\
-<properties>
+temp = 1
 \END\
