@@ -39,3 +39,10 @@ alpha_L0 = -2.320
 c_d = "NACA2412_c_d.xlsx"
 c_l = "NACA2412_c_l.xlsx"
 \END\
+
+\E210\
+a_0 = 0.1095
+alpha_L0 = -5
+c_d = "E210_c_d.xlsx"
+c_l = "E210_c_l.xlsx"
+\END\
