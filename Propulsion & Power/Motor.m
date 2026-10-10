@@ -3,7 +3,7 @@
 % -------------------------------------------------------------------------
 % Dependencies
 %   1) motor_data.txt
-%   2) GetConfigData.m Version 2.0
+%   2) GetConfigData.m Version 2.1
 % -------------------------------------------------------------------------
 % Assumptions
 %   #) <Assumption>
@@ -27,7 +27,34 @@ classdef Motor
 
     properties (SetAccess = private)
         name % the motor name/classification
-        temp
+    	kv % kv rating (RPM/V)
+	    I_o % No load current at 14V (A)
+	    R % Resistance (Ohm)
+	    I_max % Max continuous current (A)
+	    P_max % Max power (W)
+	    d_o % Outer diameter (m)
+	    L_body % Body length (m)
+	    L_shaft % Total shaft length (m)
+	    d_shaft % Shaft diameter (m)
+	    W % Weight (kg)
+        perfData struct % performance data struct with fields for:
+            %{
+            propManf: propeller manufacturer
+            propSize: propeller size
+            V: input voltage (V)
+            I: input current/motor amps (A)
+            P_input: input power/watts input (W)
+            RPM: propeller RPM (RPM)
+            pitchSpeed: pitch speed
+            T_g: thrust in grams (g)
+            T_oz: thrust in ounces (oz)
+            eta_T: thrust efficiency (g/W)
+            colorRating: compatibility rating, from cobra:
+                b: blue, The prop is to small to get good performance from the motor. (Less than 50% power)
+                g: green, The prop is sized right to get good power from the motor. (50 to 80% power)
+                y: yellow, The prop can be used, but full throttle should be kept to short bursts. (80 to 100% power)	
+                r: red, The prop is too big for the motor and should not be used. (Over 100% power)
+            %}
     end
 
     methods (Access = public)
@@ -66,7 +93,7 @@ classdef Motor
             flagMultipleConfigNames = false;
             if numConfigNames ~= 1
                 flagMultipleConfigNames = true;
-                obj(numConfigNames) = Airfoil();
+                obj(numConfigNames) = Motor();
             end
 
             % Assign obj properties values from data's fields for each
@@ -77,7 +104,17 @@ classdef Motor
                 % This is where the assumptions about each config's
                 % variables is useful
                 obj(i).name = thisConfigName;
-                obj(i).temp = data(i).temp;
+                obj(i).kv = data(i).kv;
+                obj(i).I_o = data(i).I_o;
+                obj(i).R = data(i).R;
+                obj(i).I_max = data(i).I_max;
+                obj(i).P_max = data(i).P_max;
+                obj(i).d_o = data(i).d_o;
+                obj(i).L_body = data(i).L_body;
+                obj(i).L_shaft = data(i).L_shaft;
+                obj(i).d_shaft = data(i).d_shaft;
+                obj(i).W = data(i).W;
+                obj(i).perfData = data(i).perfData;
             end
 
             % Make sure array of obj type is same size as configName, if

@@ -3,7 +3,7 @@
 % -------------------------------------------------------------------------
 % Dependencies
 %   1) propeller_data.txt
-%   2) GetConfigData.m Version 2.0
+%   2) GetConfigData.m Version 2.1
 % -------------------------------------------------------------------------
 % Assumptions
 %   #) <Assumption>
@@ -66,7 +66,7 @@ classdef Propeller
             flagMultipleConfigNames = false;
             if numConfigNames ~= 1
                 flagMultipleConfigNames = true;
-                obj(numConfigNames) = Airfoil();
+                obj(numConfigNames) = Propeller();
             end
 
             % Assign obj properties values from data's fields for each
