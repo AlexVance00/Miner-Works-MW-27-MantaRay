@@ -19,7 +19,8 @@ function data = GetConfigData(args)
 % Sources
 %   #) <Source>
 % -------------------------------------------------------------------------
-% Document Version 2.0, former versions:
+% Document Version 2.1, former versions:
+%   - 2.0
 %   - 1.0
 % -------------------------------------------------------------------------
 % MATLAB Version R2024b, also compatible with:
@@ -147,6 +148,28 @@ function data = GetConfigData(args)
                     % structFieldnames, and assign the values under it in that
                     % column in cellData to that field
                     for k = 1:numColumns
+                        % Check if value is char
+                        if ischar(cellData{2, k})
+                            % If so, data won't compile into correct size
+                            % column of string types, it will split
+                            % everything up into individual characters,
+                            % with each character in its own row,
+                            % regardless of how many elements are in the
+                            % other columns. So make them string types.
+                            % Will need to iterate thru rows
+                            numRows = size(cellData, 1) - 1;
+                            array = strings(numRows, 1);
+                            for m = 1:numRows
+                                array(m) = string(cellData(m + 1, k));
+                            end
+                           
+                            % Now assign that array to the appropriate
+                            % range in data
+                            data(i).(varName).(structFieldnames{k}) = array;                            
+
+                            % Skip to next column
+                            continue;                            
+                        end
                         data(i).(varName).(structFieldnames{k}) = [cellData{2:end, k}]';
                     end
     

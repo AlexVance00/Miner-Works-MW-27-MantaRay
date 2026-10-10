@@ -3,7 +3,7 @@
 % -------------------------------------------------------------------------
 % Dependencies
 %   1) airfoil_data.txt
-%   2) GetConfigData.m Version 2.0
+%   2) GetConfigData.m Version 2.1
 % -------------------------------------------------------------------------
 % Assumptions
 %   #) <Assumption>
@@ -122,7 +122,7 @@ classdef Airfoil
                     error("Invalid value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data(i).c_l, thisConfigName, configFile);
                 end
             end
-            
+
             % Make sure array of obj type is same size as configName, if
             % it's not 1
             if flagMultipleConfigNames
