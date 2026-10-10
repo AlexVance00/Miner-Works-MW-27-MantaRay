@@ -61,10 +61,14 @@ clear c u mu rho nu Re T gammay R_air a M
 
 % Change to work with a different airfoil config, or add multiple in an
 % array
-configName = "NACA2412";
+airfoilConfigName = "E210";
+motorConfigName = "Cobra_C3510_16";
+propellerConfigName = "CONFIG1";
 
 % Data read-in
-airfoil = Airfoil(configName);
+airfoil = Airfoil(airfoilConfigName);
+motor = Motor(motorConfigName);
+propeller = Propeller(propellerConfigName);
 %Start here
 % Airfoil data
 a0 = airfoil.a_0;                    % 2D lift curve slope, 1/deg
