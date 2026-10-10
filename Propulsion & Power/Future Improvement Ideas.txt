@@ -1,0 +1,3 @@
+Future Improvement Ideas
+1) Move airfoil performance data tabulated values spreadsheets into one folder and match its structure to that of
+	the motor performance data values
