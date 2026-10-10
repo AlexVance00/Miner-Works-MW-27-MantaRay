@@ -51,7 +51,7 @@ L_body = 0.036
 L_shaft = 0.058
 d_shaft = 0.005
 W = 0.141
-perfData = "Cobra_C3510_16_perfData.xlsx"
+perfData = "Cobra_C3510_16.xlsx"
 \END\
 
 \Cobra_C3510_20\
@@ -65,5 +65,5 @@ L_body = 0.036
 L_shaft = 0.058
 d_shaft = 0.005
 W = 0.141
-perfData = "Cobra_C3510_20_perfData.xlsx"
+perfData = "Cobra_C3510_20.xlsx"
 \END\
