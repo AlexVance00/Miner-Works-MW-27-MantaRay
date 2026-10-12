@@ -3,14 +3,15 @@ Propeller Data Configs.
 -----------------------
 BEGIN INSTRUCTIONS
 1) Read the variable descriptions below:
-	manf:		manufacturer		(~)
-	size:		8x4			(~)
-	pitch:		pitch,			(in)
-	d_prop:		propeller diameter,	(in)
-	d_hub:		hub diameter,		(in)
-	t_hub:		hub thickness,		(in)
-	d_shaft:	shaft diameter,		(in)
-	W:		weight,			(oz)
+	manf:			manufacturer			(~)
+	size:			8x4				(~)
+	pitch:			pitch,				(m)
+	d_prop:			propeller diameter,		(m)
+	d_hub:			hub diameter,			(m)
+	t_hub:			hub thickness,			(m)
+	d_shaft:		shaft diameter,			(m)
+	W:			weight,				(kg)
+	perfDataFilename:	filename for performance data
 	
 2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
 	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
@@ -40,21 +41,23 @@ END INSTRUCTIONS
 \APC_8x4\
 manf = "APC"
 size = "8x4"
-pitch = 4
-d_prop = 8
-d_hub = 0.8
-t_hub = 0.4
-d_shaft = 0.25
-W = 0.56
+pitch = 0.1016
+d_prop = 0.2032
+d_hub = 0.02032
+t_hub = 0.01016
+d_shaft = 0.00635
+W = 0.01588
+perfDataFilename = "PER3_8x4.txt"
 \END\
 
 \APC_8x6E\
 manf = "APC"
 size = "8x6-E"
-pitch = 6
-d_prop = 8
-d_hub = 0.8
-t_hub = 0.37
-d_shaft = 0.25
-W = 0.49
+pitch = 0.1524
+d_prop = 0.2032
+d_hub = 0.02032
+t_hub = 0.009398
+d_shaft = 0.00635
+W = 0.01389
+perfDataFilename = "PER3_8x6E.txt"
 \END\

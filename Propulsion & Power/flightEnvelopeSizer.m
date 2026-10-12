@@ -70,6 +70,7 @@ airfoil = Airfoil(airfoilConfigName);
 motor = Motor(motorConfigName);
 propeller = Propeller(propellerConfigName);
 
+motorPropAssy = MotorPropAssy(motorConfigName, propellerConfigName);
 % Airfoil data
 % Code right now assumes only one airfoil, not vectorized
 a0 = airfoil.a_0;                    % 2D lift curve slope, 1/deg

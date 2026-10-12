@@ -7,17 +7,18 @@
 %   3) GetConfigData.m Version 2.1
 % -------------------------------------------------------------------------
 % Assumptions
-%   1) motorConfigName and propConfigName need *not* be the same size as
-%   one another
+%   1) motorConfigName and propConfigName will be 2D and the same
+%   length, but not the same shape
 % -------------------------------------------------------------------------
 % Comments
-%   1) Vectorized. Will return a MotorPropAssy object array equal in size
-%   to mxn where m is the size of the motorConfigName array and n is the
-%   size of the propConfigName array. If either or both are
-%   multidiminesional already, the returned object array shall be a size of
-%   their sizes' product such that if motorConfigName is of size 2x3 and
-%   propConfigName is of size 4x5, the returned array shall be of size
-%   2x3x4x5
+%   1) perfData contains performance data resulting from combining the
+%   motor with the propeller, and has 1 field per compatible battery
+%   configuration the motor and propeller can run with. For example, if a
+%   motor and prop can be used together either with a 3S power plant or a
+%   4S one, perfData will have a "Battery3S" field and a "Battery4S" field
+%   2) If both are mx1, that's fine, and if motorConfigName is mx1 and
+%   propConfigName is 1xm, that's also fine. The returned array will be the
+%   same size as motorConfigName, mx1 in this example
 % -------------------------------------------------------------------------
 % Document Version 1.0, earlier versions:
 %   - <Version>
@@ -28,9 +29,15 @@
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef MotorPropAssy
 
+    properties (Constant)
+        LiPoBatteryVnom = 3.7; % nominal LiPo battery voltage for 1S battery
+    end
+
     properties (SetAccess = private)
         motor Motor
-        propeller Propeller        
+        propeller Propeller
+        perfData = struct()
+        W % weight kg
     end
 
     methods (Access = public)
@@ -64,30 +71,75 @@ classdef MotorPropAssy
                 end
                 return;
             end
-            % Below is the normal case, both arguments were passed. Return
-            % a MotorPropAssy for each combination of motor and propeller
-            numMotors = numel(motorConfigName);
-            numProps = numel(propConfigName);
-            flagMultipleAssys = false;
-            if numMotors ~= 1 || numProps ~= 1
-                flagMultipleAssys = true;
-                sizeMotors = size(motorConfigName);
-                sizeProps = size(propConfigName);
-                obj([sizeMotors, sizeProps]) = MotorPropAssy();
+            % Check if args are the right size
+            if ~isvector(motorConfigName)
+                error("motorConfigName was not passed in as vector\n");
+            elseif ~isvector(propConfigName)
+                error("motorConfigName was not passed in as vector\n");
             end
 
-            for m1 = 1:sizeMotors(1)
-                for n1 = 1:sizeMotors(2)
-                    thisMotorConfigName = motorConfigName(m1, n1);
-                    for m2 = 1:sizeProps(1)
-                        for n2 = 1:sizeProps(2)
-                            thisPropConfigName = propConfigName(m2, n2);
-                            obj(m1, n1, m2, n2).motor = Motor(thisMotorConfigName);
-                            obj(m1, n1, m2, n2).prop = Propeller(thisPropConfigName);                            
+            numMotors = numel(motorConfigName);
+            numProps = numel(propConfigName);
+            % Check if sizes are equal
+            if numMotors ~= numProps
+                error("Number of motors, %d, needs to equal number of propellers, %d\n", numMotors, numProps);
+            end
+            
+            % Below is the normal case, both arguments were passed. Return
+            % a MotorPropAssy for each combination of motor and propeller
+            flagMultipleAssys = false;
+            if numMotors ~= 1
+                flagMultipleAssys = true;
+                obj(numMotors) = MotorPropAssy();
+            end
+
+            for m = 1:numMotors
+                obj(m).motor = Motor(motorConfigName(m));
+                obj(m).propeller = Propeller(propConfigName(m));
+                obj(m).W = obj(m).motor.W + obj(m).propeller.W;
+
+                % Get which row numbers in motor's data table this
+                % propeller lives. It could be more than 1. If it's 0,
+                % throw warning and set perfData to missing
+                rowNumber = find(obj(m).motor.perfData.propSize == obj(m).propeller.size);
+                if isempty(rowNumber)
+                    % 0 matches case
+                    warning("Propeller %s incompatible with motor %s\n", propConfigName(m), motorConfigName(m));
+                    obj(m).perfData = missing;
+                    continue;
+                elseif isscalar(rowNumber)
+                    % 1 match case
+                    % Check colorRating. If it's not green, this isn't a
+                    % usable case
+                    if obj(m).motor.perfData.colorRating(rowNumber) ~= "g"
+                        warning("Propeller %s incompatible with motor %s\n", propConfigName(m), motorConfigName(m));
+                        obj(m).perfData = missing;
+                        continue;
+                    end
+                    Scount = string(round(obj(m).motor.perfData.V(rowNumber) / MotorPropAssy.LiPoBatteryVnom));
+                    obj(m).perfData.("Battery" + Scount + "S").RPM = obj(m).motor.perfData.RPM(rowNumber);
+                else
+                    % >1 matches case
+                    for r = 1:numel(rowNumber)
+                        thisRowNumber = rowNumber(r);
+                        Scount = string(round(obj(m).motor.perfData.V(thisRowNumber) / MotorPropAssy.LiPoBatteryVnom));
+                        % Check colorRating. If it's not green, this isn't a
+                        % usable case
+                        if obj(m).motor.perfData.colorRating(thisRowNumber) ~= "g"
+                            warning("Propeller %s incompatible with motor %s for %sS battery config.\n", propConfigName(m), motorConfigName(m), Scount);
+                            continue;
                         end
+                        obj(m).perfData.("Battery" + Scount + "S").RPM = obj(m).motor.perfData.RPM(thisRowNumber);
+                        obj(m).perfData.("Battery" + Scount + "S").n = obj(m).perfData.("Battery" + Scount + "S").RPM / 60; % n is rev/s, used in calculating other params
+                        % Find which RPM block for the prop is closest to motor-prop combo RPM
+                        % obj(m).perfData.("Battery" + Scount + "S").RPM                       
+                        % Store T and P data for different speeds
+                        % RPMScale = obj(m).perfData.("Battery" + Scount + "S").RPM / min(abs(obj(m).perfData.("Battery" + Scount + "S").RPM - obj(m).propeller.perfData));
                     end
                 end
             end
+
+            obj = reshape(obj, size(motorConfigName));
 
             return;
         end

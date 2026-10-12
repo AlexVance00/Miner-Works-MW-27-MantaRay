@@ -136,8 +136,14 @@ function data = GetConfigData(args)
                 % know the difference), remove them
                 fileSearchMatches = fileSearchMatches(~[fileSearchMatches.isdir]);
                 if ~isempty(fileSearchMatches)
-                    % If the string was a filename, read in its contents
+                    % If the string was a filename and a .xlsx file, read
+                    % it in. Otherwise just set the variable value to the
+                    % name of the file
                     dataFilename = fullfile(fileSearchMatches(1).folder, fileSearchMatches(1).name);
+                    if ~contains(dataFilename, ".xlsx")
+                        data(i).(varName) = lastValue;
+                        continue;
+                    end
                     cellData = readcell(dataFilename);
                     structFieldnames = cellData(1, :);
                     % Log what file was used
