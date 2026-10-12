@@ -63,14 +63,15 @@ clear c u mu rho nu Re T gammay R_air a M
 % array
 airfoilConfigName = "E210";
 motorConfigName = "Cobra_C3510_16";
-propellerConfigName = "CONFIG1";
+propellerConfigName = "APC_8x6E";
 
 % Data read-in
 airfoil = Airfoil(airfoilConfigName);
 motor = Motor(motorConfigName);
 propeller = Propeller(propellerConfigName);
-%Start here
+
 % Airfoil data
+% Code right now assumes only one airfoil, not vectorized
 a0 = airfoil.a_0;                    % 2D lift curve slope, 1/deg
 alpha_L0 = airfoil.alpha_L0;         % Zero-lift AoA, deg
 alpha_data = airfoil.c_d.alpha(:);   % AoA data, deg
@@ -83,26 +84,64 @@ S = 11.33;           % Wing area, ft^2 JUST A PLACEHOLDER FOR NOW
 W = 20;              % Aircraft weight, lbf JUST A PLACEHOLDER FOR NOW
 e = 0.8;             % Oswald efficiency factor JUST A PLACEHOLDER FOR NOW
 
-% Flight conditions
+% Flight speed range to inspect
 V_min = 10;          % Minimum velocity, ft/s 
 V_max = 150;         % Maximum velocity, ft/s
 numV = 500;
-V_cruise = 60;       % Cruise velocity, ft/s JUST A PLACEHOLDER FOR NOW
-
 V = linspace(V_min, V_max, numV);
 
-% Optional propulsion inputs
-% Leave motorPower_W = [] to suppress Power/Thrust Available plots.
+V_cruise = 60;       % Cruise velocity, ft/s JUST A PLACEHOLDER FOR NOW
+
+% Motor data
+eta_prop = 0.8;      % Prop efficiency - ESTIMATE
 numMotors = 2;
-motorPower_W = [];   % Shaft power per motor in Watts
-eta_prop = 0.8;      % Prop efficiency
+% Make cell array for different motor/propeller combinations. Additionally,
+% have each object in that cell array be a struct
+numMotors = numel(motor);
+numProps = numel(propeller);
+% Check if imported propeller is compatible with imported motor/ has data
+% on that motor's table on cobra's website. If not, the configuration will
+% be skipped/data set to missing or empty
+for m = 1:numMotors
+    thisMotor = motor(m);
+    for p = 1:numProps
+        % Search this motor's props for this prop
+        thisProp = propeller(p);
+        rowNumbers = find(thisMotor.perfData.propSize == thisProp.size);
+        % Sometimes this propeller shows up multiple times in the table.
+        % That's because the table sometimes contains data for 3S, 4S, and
+        % 5S battery supplies, and the prop can be used in more than 1 of
+        % those configurations. First, find rows whose colorRating values
+        % are set to g for green, meaning the propeller is compatible with
+        % the motor
+        colorRatings = thisMotor.perfData.colorRating(rowNumbers);
+        badRowNumbers = rowNumbers(colorRatings ~= "g");
+        if ~isempty(badRowNumbers)
+            for i = 1:numel(badRowNumbers)
+                thisBadRow = badRowNumbers(i);
+                warning("Propeller %s is rated ""%s"" with motor %s for input voltage %.2fV", thisProp.name, thisMotor.perfData.colorRating(thisBadRow), thisMotor.name, thisMotor.perfData.V(thisBadRow));
+            end
+        end
+        goodRowNumbers = rowNumbers(colorRatings == "g");
+        if isempty(goodRowNumbers)
+            warning("Propeller %s is not rated ""g"" with motor %s", thisProp.name, thisMotor.name);
+        end
+        % Then get the input voltage for this motor/prop combo. The
+        % configurations will be separated this way. 3S battery configs
+        % will use 11.1V, 4S will use 14.8V, and 5S will use 18.5V
+
+    end
+end
+propRPMs = motor.perfData.RPM
+% Leave motorPower_W = [] to suppress Power/Thrust Available plots.
+motorPower_W = (motor.perfData.I - motor.I_o) .* (1);   % Shaft power per motor in Watts
 
 % Convert propulsion power to useful propulsive power
 if isempty(motorPower_W)
     PA = [];
 else
     PA_W = numMotors * motorPower_W * eta_prop;
-    PA = PA_W * 0.737562;            
+    PA = PA_W * 0.737562; % conversion from W to ft-lbf/s
 end
 
 % Wing geometry / finite-wing lift slope

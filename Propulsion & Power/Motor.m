@@ -6,7 +6,8 @@
 %   2) GetConfigData.m Version 2.1
 % -------------------------------------------------------------------------
 % Assumptions
-%   #) <Assumption>
+%   1) Meant to be used with cobra motors and their performance data
+%       listing pages
 % -------------------------------------------------------------------------
 % Comments
 %   1) Vectorized. Pass in configName as an array and a same-sized array of
@@ -61,7 +62,7 @@ classdef Motor
 
         % Constructor
         function obj = Motor(configName)
-            % If no arguments were passed, just return empty Airfoil object
+            % If no arguments were passed, just return empty object
             if nargin == 0
                 return;
             end
