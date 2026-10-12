@@ -2,7 +2,6 @@
 % some other geometric wing properties and testing different airfoils by
 % generating a power-available vs. power-required graph for different
 % velocities and angles of attack
-%                                                     <Output> in (<Units>)
 % -------------------------------------------------------------------------
 % Dependencies
 %   1) airfoil_data.txt
@@ -69,71 +68,64 @@ propellerConfigName = "APC_8x6E";
 airfoil = Airfoil(airfoilConfigName);
 motor = Motor(motorConfigName);
 propeller = Propeller(propellerConfigName);
-
 motorPropAssy = MotorPropAssy(motorConfigName, propellerConfigName);
+
 % Airfoil data
 % Code right now assumes only one airfoil, not vectorized
 a0 = airfoil.a_0;                    % 2D lift curve slope, 1/deg
+a0 = a0 .* 180 ./ pi; % 1/deg to 1/rad
 alpha_L0 = airfoil.alpha_L0;         % Zero-lift AoA, deg
+alpha_L0 = alpha_L0 ./ 180 .* pi; % deg to rad
 alpha_data = airfoil.c_d.alpha(:);   % AoA data, deg
+alpha_data = alpha_data ./ 180 .* pi; % deg to rad
+validAlphasMask = alpha_data >= alpha_L0; % ignore alphas below which cl is negative (lower than alpha_L0)
+alpha_data = alpha_data(validAlphasMask);
 cd_data = airfoil.c_d.c_d(:);        % 2D/profile drag coefficient
-
-% Aircraft / atmosphere
-rho = 0.0023769;     
-b = 8.5;             % Wingspan, ft JUST A PLACEHOLDER FOR NOW
-S = 11.33;           % Wing area, ft^2 JUST A PLACEHOLDER FOR NOW
-W = 20;              % Aircraft weight, lbf JUST A PLACEHOLDER FOR NOW
-e = 0.8;             % Oswald efficiency factor JUST A PLACEHOLDER FOR NOW
-
-% Flight speed range to inspect
-V_min = 10;          % Minimum velocity, ft/s 
-V_max = 150;         % Maximum velocity, ft/s
-numV = 500;
-V = linspace(V_min, V_max, numV);
-
-V_cruise = 60;       % Cruise velocity, ft/s JUST A PLACEHOLDER FOR NOW
+cd_data = cd_data(validAlphasMask);
 
 % Motor data
 eta_prop = 0.8;      % Prop efficiency - ESTIMATE
 numMotors = 2;
-% Make cell array for different motor/propeller combinations. Additionally,
-% have each object in that cell array be a struct
-numMotors = numel(motor);
-numProps = numel(propeller);
-% Check if imported propeller is compatible with imported motor/ has data
-% on that motor's table on cobra's website. If not, the configuration will
-% be skipped/data set to missing or empty
-for m = 1:numMotors
-    thisMotor = motor(m);
-    for p = 1:numProps
-        % Search this motor's props for this prop
-        thisProp = propeller(p);
-        rowNumbers = find(thisMotor.perfData.propSize == thisProp.size);
-        % Sometimes this propeller shows up multiple times in the table.
-        % That's because the table sometimes contains data for 3S, 4S, and
-        % 5S battery supplies, and the prop can be used in more than 1 of
-        % those configurations. First, find rows whose colorRating values
-        % are set to g for green, meaning the propeller is compatible with
-        % the motor
-        colorRatings = thisMotor.perfData.colorRating(rowNumbers);
-        badRowNumbers = rowNumbers(colorRatings ~= "g");
-        if ~isempty(badRowNumbers)
-            for i = 1:numel(badRowNumbers)
-                thisBadRow = badRowNumbers(i);
-                warning("Propeller %s is rated ""%s"" with motor %s for input voltage %.2fV", thisProp.name, thisMotor.perfData.colorRating(thisBadRow), thisMotor.name, thisMotor.perfData.V(thisBadRow));
-            end
-        end
-        goodRowNumbers = rowNumbers(colorRatings == "g");
-        if isempty(goodRowNumbers)
-            warning("Propeller %s is not rated ""g"" with motor %s", thisProp.name, thisMotor.name);
-        end
-        % Then get the input voltage for this motor/prop combo. The
-        % configurations will be separated this way. 3S battery configs
-        % will use 11.1V, 4S will use 14.8V, and 5S will use 18.5V
 
-    end
-end
-propRPMs = motor.perfData.RPM
+% Aircraft / atmosphere
+rho = 0.0023769;     % sea level air density, slug/ft^3
+b = 9.56;             % Wingspan, ft JUST A PLACEHOLDER FOR NOW
+S = 10.73;           % Wing area, ft^2 JUST A PLACEHOLDER FOR NOW
+W = 11;              % Aircraft weight, lbf JUST A PLACEHOLDER FOR NOW
+e = 0.8;             % Oswald efficiency factor JUST A PLACEHOLDER FOR NOW
+AR = b^2 / S;        % calculate Aspect Ratio based on estimated b, S
+
+% Get a from a0, e, and AR
+a = a0 / (1 + a0/(pi*e*AR)); % rad
+% Get CL vs alpha
+CL = a .* (alpha_data - alpha_L0);
+
+% Flight speed range to inspect
+% stall speed at L/W <= 1
+vstall = sqrt(W ./ CL .* 2 ./ rho ./ S); % ft/s
+V_min = min(vstall);          % Minimum velocity, ft/s
+% Set max v based on when propeller provides no more thrust
+% Values near end of array might be negative, chop em off
+posThrustMask = motorPropAssy.perfData.Battery3S.T >= 0;
+% Can assume will only chop off values on end of array, not at beginning or
+% in middle
+[~, vMaxIdx] = min(motorPropAssy.perfData.Battery3S.T(posThrustMask));
+vmax = motorPropAssy.perfData.Battery3S.v(vMaxIdx) .* 1.467; % mph to ft/s
+fprintf("max speed is %.2f ft/s\n", vmax);
+V_max = 150;         % Maximum velocity, ft/s
+numV = 20; % number of data points per curve
+
+% Find v cruise, v for max L/D
+[~, cruiseIdx] = max(CL ./ cd_data);
+alphaCruise = alpha_data(cruiseIdx); % cruise angle of attack
+% Estimate how much pct higher than vstall to set vcruise, for safety buffer
+vcruiseBuffer = 20; % percent
+vcruise = vstall(cruiseIdx) .* (1 + vcruiseBuffer ./ 100);
+fprintf("vstall at cruise is %.2f ft/s, vcruise is %.1f%% higher, %.2f ft/s\n", vstall(cruiseIdx), vcruiseBuffer, vcruise);
+V_cruise = 60;       % Cruise velocity, ft/s JUST A PLACEHOLDER FOR NOW
+
+V = linspace(V_min, V_max, numV);
+
 % Leave motorPower_W = [] to suppress Power/Thrust Available plots.
 motorPower_W = (motor.perfData.I - motor.I_o) .* (1);   % Shaft power per motor in Watts
 
@@ -143,14 +135,7 @@ if isempty(motorPower_W)
 else
     PA_W = numMotors * motorPower_W * eta_prop;
     PA = PA_W * 0.737562; % conversion from W to ft-lbf/s
-end
-
-% Wing geometry / finite-wing lift slope
-AR = b^2 / S;
-
-a0_rad = a0 * 180/pi;
-a_rad = a0_rad / (1 + a0_rad/(pi*e*AR));
-a = a_rad * pi/180;                  
+end           
 
 
 %% POWER REQUIRED VS VELOCITY, LEVEL FLIGHT

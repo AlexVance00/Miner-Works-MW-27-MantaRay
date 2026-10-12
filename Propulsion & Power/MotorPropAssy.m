@@ -36,7 +36,11 @@ classdef MotorPropAssy
     properties (SetAccess = private)
         motor Motor
         propeller Propeller
-        perfData = struct()
+        perfData = struct() % performance data struct with fields:
+            % RPM:  RPM of assy
+            % v:    Speed array, m/s
+            % T:    Thrust array, N
+            % P:    Power array, W
         W % weight kg
     end
 
@@ -132,9 +136,15 @@ classdef MotorPropAssy
                         obj(m).perfData.("Battery" + Scount + "S").RPM = obj(m).motor.perfData.RPM(thisRowNumber);
                         obj(m).perfData.("Battery" + Scount + "S").n = obj(m).perfData.("Battery" + Scount + "S").RPM / 60; % n is rev/s, used in calculating other params
                         % Find which RPM block for the prop is closest to motor-prop combo RPM
-                        % obj(m).perfData.("Battery" + Scount + "S").RPM                       
+                        fields = fieldnames(obj(m).propeller.perfData);
+                        RPMs = str2double(erase(string(fields), "RPM"));
+                        [~, closestBlockNum] = min(abs(RPMs - obj(m).perfData.("Battery" + Scount + "S").RPM));
+                        blockName = fields{closestBlockNum};
+                        blockData = obj(m).propeller.perfData.(blockName);
                         % Store T and P data for different speeds
-                        % RPMScale = obj(m).perfData.("Battery" + Scount + "S").RPM / min(abs(obj(m).perfData.("Battery" + Scount + "S").RPM - obj(m).propeller.perfData));
+                        obj(m).perfData.("Battery" + Scount + "S").v = [blockData{3:end, 1}]' ./ 2.237; % mph to m/s
+                        obj(m).perfData.("Battery" + Scount + "S").T = [blockData{3:end, 11}]';
+                        obj(m).perfData.("Battery" + Scount + "S").P = [blockData{3:end, 9}]';
                     end
                 end
             end
