@@ -27,14 +27,21 @@ classdef Propeller
 
     properties (SetAccess = private)
         name % the propeller name/classification
-        temp
+        manf
+        size
+        pitch
+        d_prop
+        d_hub
+        t_hub
+        d_shaft
+        W
     end
 
     methods (Access = public)
 
         % Constructor
         function obj = Propeller(configName)
-            % If no arguments were passed, just return empty Airfoil object
+            % If no arguments were passed, just return empty object
             if nargin == 0
                 return;
             end
@@ -77,7 +84,14 @@ classdef Propeller
                 % This is where the assumptions about each config's
                 % variables is useful
                 obj(i).name = thisConfigName;
-                obj(i).temp = data(i).temp;
+                obj(i).manf = data(i).manf;
+                obj(i).size = data(i).size;
+                obj(i).pitch = data(i).pitch;
+                obj(i).d_prop = data(i).d_prop;
+                obj(i).d_hub = data(i).d_hub;
+                obj(i).t_hub = data(i).t_hub;
+                obj(i).d_shaft = data(i).d_shaft;
+                obj(i).W = data(i).W;
             end
 
             % Make sure array of obj type is same size as configName, if

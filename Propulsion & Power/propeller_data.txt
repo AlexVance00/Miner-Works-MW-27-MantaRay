@@ -3,8 +3,14 @@ Propeller Data Configs.
 -----------------------
 BEGIN INSTRUCTIONS
 1) Read the variable descriptions below:
-	temp:				Description,		(Units)
-	exampleVariableName2:		Description,		(Units)
+	manf:		manufacturer		(~)
+	size:		8x4			(~)
+	pitch:		pitch,			(in)
+	d_prop:		propeller diameter,	(in)
+	d_hub:		hub diameter,		(in)
+	t_hub:		hub thickness,		(in)
+	d_shaft:	shaft diameter,		(in)
+	W:		weight,			(oz)
 	
 2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
 	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
@@ -31,6 +37,24 @@ exampleVariableName2 = exampleValue
 
 END INSTRUCTIONS
 %
-\CONFIG1\
-temp = 1
+\APC_8x4\
+manf = "APC"
+size = "8x4"
+pitch = 4
+d_prop = 8
+d_hub = 0.8
+t_hub = 0.4
+d_shaft = 0.25
+W = 0.56
+\END\
+
+\APC_8x6E\
+manf = "APC"
+size = "8x6-E"
+pitch = 6
+d_prop = 8
+d_hub = 0.8
+t_hub = 0.37
+d_shaft = 0.25
+W = 0.49
 \END\
