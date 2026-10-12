@@ -137,8 +137,16 @@ function data = GetConfigData(args)
                 fileSearchMatches = fileSearchMatches(~[fileSearchMatches.isdir]);
                 if ~isempty(fileSearchMatches)
                     % If the string was a filename, read in its contents
-                    cellData = readcell(fullfile(fileSearchMatches(1).folder, fileSearchMatches(1).name));
+                    dataFilename = fullfile(fileSearchMatches(1).folder, fileSearchMatches(1).name);
+                    cellData = readcell(dataFilename);
                     structFieldnames = cellData(1, :);
+                    % Log what file was used
+                    % But first check if file is a field already used
+                    % in the tabulated values file
+                    if ismember("file", structFieldnames)
+                        error("Field ""file"" cannot be used in tabulated values at: %s\n", dataFilename);
+                    end
+                    data(i).(varName).file = fileSearchMatches(1).name;
                     % Check if any elements in first row are empty- this
                     % sometimes happens when excel stores empty characters
                     % in cells that used to have values but don't anymore
