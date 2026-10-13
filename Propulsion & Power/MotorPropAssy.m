@@ -37,7 +37,8 @@ classdef MotorPropAssy
         motor Motor
         propeller Propeller
         perfData = struct() % performance data struct with fields:
-            % RPM:  RPM of assy
+            % RPMmax:  max RPM of assy
+            % nmax:    max revs/s of assy
             % v:    Speed array, m/s
             % T:    Thrust array, N
             % P:    Power array, W
@@ -108,7 +109,7 @@ classdef MotorPropAssy
                 rowNumber = find(obj(m).motor.perfData.propSize == obj(m).propeller.size);
                 if isempty(rowNumber)
                     % 0 matches case
-                    warning("Propeller %s incompatible with motor %s\n", propConfigName(m), motorConfigName(m));
+                    warning("Propeller %s incompatible with motor %s", propConfigName(m), motorConfigName(m));
                     obj(m).perfData = missing;
                     continue;
                 elseif isscalar(rowNumber)
@@ -121,7 +122,7 @@ classdef MotorPropAssy
                         continue;
                     end
                     Scount = string(round(obj(m).motor.perfData.V(rowNumber) / MotorPropAssy.LiPoBatteryVnom));
-                    obj(m).perfData.("Battery" + Scount + "S").RPM = obj(m).motor.perfData.RPM(rowNumber);
+                    obj(m).perfData.("Battery" + Scount + "S").RPMmax = obj(m).motor.perfData.RPM(rowNumber);
                 else
                     % >1 matches case
                     for r = 1:numel(rowNumber)
@@ -130,21 +131,25 @@ classdef MotorPropAssy
                         % Check colorRating. If it's not green, this isn't a
                         % usable case
                         if obj(m).motor.perfData.colorRating(thisRowNumber) ~= "g"
-                            warning("Propeller %s incompatible with motor %s for %sS battery config.\n", propConfigName(m), motorConfigName(m), Scount);
+                            warning("Propeller %s incompatible with motor %s for %sS battery config.", propConfigName(m), motorConfigName(m), Scount);
                             continue;
                         end
-                        obj(m).perfData.("Battery" + Scount + "S").RPM = obj(m).motor.perfData.RPM(thisRowNumber);
-                        obj(m).perfData.("Battery" + Scount + "S").n = obj(m).perfData.("Battery" + Scount + "S").RPM / 60; % n is rev/s, used in calculating other params
-                        % Find which RPM block for the prop is closest to motor-prop combo RPM
+                        obj(m).perfData.("Battery" + Scount + "S").RPMmax = obj(m).motor.perfData.RPM(thisRowNumber);
+                        obj(m).perfData.("Battery" + Scount + "S").nmax = obj(m).perfData.("Battery" + Scount + "S").RPMmax / 60; % n is rev/s, used in calculating other params
+                        % Find which RPM block for the prop is closest to motor-prop combo RPMmax
                         fields = fieldnames(obj(m).propeller.perfData);
                         RPMs = str2double(erase(string(fields), "RPM"));
-                        [~, closestBlockNum] = min(abs(RPMs - obj(m).perfData.("Battery" + Scount + "S").RPM));
-                        blockName = fields{closestBlockNum};
-                        blockData = obj(m).propeller.perfData.(blockName);
-                        % Store T and P data for different speeds
-                        obj(m).perfData.("Battery" + Scount + "S").v = [blockData{3:end, 1}]' ./ 2.237; % mph to m/s
-                        obj(m).perfData.("Battery" + Scount + "S").T = [blockData{3:end, 11}]';
-                        obj(m).perfData.("Battery" + Scount + "S").P = [blockData{3:end, 9}]';
+                        [~, closestBlockNum] = min(abs(RPMs - obj(m).perfData.("Battery" + Scount + "S").RPMmax));
+                        % Now go from the 1st block through the closest
+                        % block and save that data
+                        for b = 1:closestBlockNum
+                            blockName = fields{b};
+                            blockData = obj(m).propeller.perfData.(blockName);
+                            % Store T and P data for different speeds
+                            obj(m).perfData.("Battery" + Scount + "S").(blockName).v = [blockData{3:end, 1}]' ./ 2.237; % mph to m/s
+                            obj(m).perfData.("Battery" + Scount + "S").(blockName).T = [blockData{3:end, 11}]';
+                            obj(m).perfData.("Battery" + Scount + "S").(blockName).P = [blockData{3:end, 9}]';
+                        end
                     end
                 end
             end

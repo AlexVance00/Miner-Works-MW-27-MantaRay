@@ -165,14 +165,17 @@ classdef Propeller
                 for r = (i1 + 3):i2
                     thisRowData = split(allDataText(r), " ");
                     thisRowData = thisRowData(thisRowData ~= "")';
-                    % Sometimes rows are incomplete, just set those rows to
-                    % missing
+                    % Sometimes rows are incomplete, just delete those rows
                     if numel(thisRowData) ~= numel(colNames)
                         obj.perfData.("RPM" + thisRPM)(r - b - ((b - 1) * numRows), 1:15) = {missing};
                         continue;
                     end
                     obj.perfData.("RPM" + thisRPM)(r - b - ((b - 1) * numRows), 1:15) = num2cell(str2double(thisRowData));
                 end
+                % Go back and trim out any rows with missing vals
+                emptyCellsMask = cellfun(@(c) isa(c, "missing"), obj.perfData.("RPM" + thisRPM)); % any(ismissing(obj.perfData.("RPM" + thisRPM)), 2);
+                emptyRowsMask = any(emptyCellsMask, 2);
+                obj.perfData.("RPM" + thisRPM) = obj.perfData.("RPM" + thisRPM)(~emptyRowsMask, :);
             end
             return;
         end

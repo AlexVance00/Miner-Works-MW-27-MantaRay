@@ -6,7 +6,8 @@
 %   2) GetConfigData.m Version 2.1
 % -------------------------------------------------------------------------
 % Assumptions
-%   #) <Assumption>
+%   1) c_l array in c_l spreadsheet will be same size as c_d array in c_d
+%       spreadsheet for given airfoil
 % -------------------------------------------------------------------------
 % Comments
 %   1) Vectorized. Pass in configName as an array and a same-sized array of

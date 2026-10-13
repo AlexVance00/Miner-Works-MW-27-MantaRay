@@ -4,7 +4,8 @@
 % velocities and angles of attack
 % -------------------------------------------------------------------------
 % Dependencies
-%   1) airfoil_data.txt
+%   1) Airfoil.m Version 2.0
+%   2) MotorPropAssy.m Version 1.0
 % -------------------------------------------------------------------------
 % Assumptions
 %   #) <Assumption>
@@ -19,9 +20,6 @@
 % (adrienh01 on Github)
 % -------------------------------------------------------------------------
 
-% INFORMATION FOR CONFIG READ-IN
-% Look at Airfoil.m for how to read its properties
-
 clc
 clear
 close all
@@ -29,7 +27,7 @@ close all
 % Estimates to gauge Reynold's and Mach Numbers, for XFLR5 analysis
 % parameters
 % characteristic length is chord -> estimate
-c = 12^-1 * 16; % in to ft
+c = 16 / 12; % in to ft
 % Need some nominal speed -> estimate
 u = 50; % ft/s
 % Need air kinematic viscosity -> estimate (standard atmosphere conditions
@@ -49,7 +47,7 @@ gammay = 1.4;
 % Use common value for air's gas constant
 R_air = 1716; % (lbf-ft)/(slug-deg R)
 % Get speed of sound
-a = sqrt(gammay * R_air * T);
+a = sqrt(gammay * R_air * T); % ft/s
 % Finally calculate Mach Number
 M = u / a;
 % Print estimated values
@@ -58,73 +56,181 @@ fprintf("Estimated Mach Number: %.5f\n\n", M);
 % Clear variables so they don't mess with later work
 clear c u mu rho nu Re T gammay R_air a M
 
-% Change to work with a different airfoil config, or add multiple in an
-% array
+% Change to work with a different airfoil config, or add multiple in a
+% string array
 airfoilConfigName = "E210";
 motorConfigName = "Cobra_C3510_16";
 propellerConfigName = "APC_8x6E";
 
-% Data read-in
+%% Data read-in
 airfoil = Airfoil(airfoilConfigName);
-motor = Motor(motorConfigName);
-propeller = Propeller(propellerConfigName);
 motorPropAssy = MotorPropAssy(motorConfigName, propellerConfigName);
 
 % Airfoil data
-% Code right now assumes only one airfoil, not vectorized
-a0 = airfoil.a_0;                    % 2D lift curve slope, 1/deg
+a0 = airfoil.a_0;                      % 2D lift curve slope, 1/deg
+alpha_L0 = airfoil.alpha_L0;           % Zero-lift AoA, deg
+rawAlphaData = airfoil.c_d.alpha(:);   % AoA data, deg
+rawcdData = airfoil.c_d.c_d(:);        % 2D/profile drag coefficient
+% Geometry / Estimates
+b = 9.56;            % span, ft
+S = 10.73;           % planform area, ft^2
+W = 11;              % weight, lbf
+e = 0.8;             % Oswald efficiency factor
+AR = b^2 / S;        % aspect ratio
+
+% Convert airfoil data units
 a0 = a0 .* 180 ./ pi; % 1/deg to 1/rad
-alpha_L0 = airfoil.alpha_L0;         % Zero-lift AoA, deg
 alpha_L0 = alpha_L0 ./ 180 .* pi; % deg to rad
-alpha_data = airfoil.c_d.alpha(:);   % AoA data, deg
-alpha_data = alpha_data ./ 180 .* pi; % deg to rad
-validAlphasMask = alpha_data >= alpha_L0; % ignore alphas below which cl is negative (lower than alpha_L0)
-alpha_data = alpha_data(validAlphasMask);
-cd_data = airfoil.c_d.c_d(:);        % 2D/profile drag coefficient
-cd_data = cd_data(validAlphasMask);
+rawAlphaData = rawAlphaData ./ 180 .* pi; % deg to rad
+
+% Ignore angles of attack below which cl is negative (lower than alpha_L0)
+alphaDataMaskPoscl = rawAlphaData >= alpha_L0;
+alphaDataPoscl = rawAlphaData(alphaDataMaskPoscl);
+cdDataPoscl = rawcdData(alphaDataMaskPoscl);
 
 % Motor data
-eta_prop = 0.8;      % Prop efficiency - ESTIMATE
+eta_prop = 0.8;
 numMotors = 2;
 
-% Aircraft / atmosphere
-rho = 0.0023769;     % sea level air density, slug/ft^3
-b = 9.56;             % Wingspan, ft JUST A PLACEHOLDER FOR NOW
-S = 10.73;           % Wing area, ft^2 JUST A PLACEHOLDER FOR NOW
-W = 11;              % Aircraft weight, lbf JUST A PLACEHOLDER FOR NOW
-e = 0.8;             % Oswald efficiency factor JUST A PLACEHOLDER FOR NOW
-AR = b^2 / S;        % calculate Aspect Ratio based on estimated b, S
+% Atmosphere
+rho = 0.0023769;     % Sea level air density, slug/ft^3
 
+% Calculate thrust available and power available curves
+% Thrust available depends on RPM and speed
+% For thrust available curve, want max thrust available, which would be for
+% max RPM. Then sweep across speeds
+% Use RPM value from motor data table in the row where the imported
+% propeller can be found. Will be stored in performance data of
+% motorPropAssy
+% Will need to specify what range of velocities we care about. vstall
+% through vpropmax
+% Get stall speed, speed at CLmax where L=W
 % Get a from a0, e, and AR
-a = a0 / (1 + a0/(pi*e*AR)); % rad
-% Get CL vs alpha
-CL = a .* (alpha_data - alpha_L0);
+a = a0 / (1 + a0 / (pi * e * AR)); % 1/rad
+% Get CLmax
+CLmax = a .* (max(alphaDataPoscl) - alpha_L0);
+fprintf("Max CL is %.4f\n", CLmax);
+vstall = sqrt(W ./ CLmax .* 2 ./ rho ./ S); % ft/s
+fprintf("Stall speed is %.4f ft/s\n", vstall);
+bcs = string(fieldnames(motorPropAssy.perfData)); % bcs - batteryConfigs
+for bc = 1:numel(bcs)
+    fprintf("Max RPM of propeller %s with motor %s for battery config %s is %d RPM\n", motorPropAssy.propeller.name, motorPropAssy.motor.name, erase(bcs(bc), "Battery"), motorPropAssy.perfData.(bcs(bc)).RPMmax);
+end
+vCount = 20; % number of speeds to sweep through
+%% Sweep through all valid RPM blocks
+% This will get 2D array of TA, PA, TR, and PR vals for varying v and RPM
+% vals. Will surf plot later
+flagJustCheckFirstBC = true; % True: just reads data for first battery config
+if ~flagJustCheckFirstBC
+    error("Analysis of motorPropAssy objects with multiple valid battery configurations (e.g 3S, 4S, etc.) not yet implemented\n");
+end
+bc = bcs(1);
+% Make 2D array for all this. each column will be for different RPMs. First
+% column for lowest, final for highest
+RPMStringsAll = string(fieldnames(motorPropAssy.perfData.(bc))); % First 2 fields are RPMmax, and nmax. Ignore them
+RPMStrings = RPMStringsAll(3:end);
+RPMArray = zeros(size(RPMStrings));
+vArray = zeros(vCount, numel(RPMStrings));
+TAArray = zeros(size(vArray));
+vpropmaxArray = zeros(1, numel(RPMArray));
+for R = 1:numel(RPMStrings)
+    RPMString = RPMStrings{R};
+    RPM = str2double(erase(RPMString, "RPM"));
+    RPMArray(R) = RPM;
+    % Get vpropmax, speed at which prop can provide no more thrust
+    % Values near end of array might be negative, chop em off
+    posThrustMask = motorPropAssy.perfData.(bc).(RPMString).T >= 0;
+    % Can assume will only chop off values on end of array, not at beginning or
+    % in middle
+    [~, vpropmaxIdx] = min(motorPropAssy.perfData.(bc).(RPMString).T(posThrustMask));
+    vpropmax = motorPropAssy.perfData.(bc).(RPMString).v(vpropmaxIdx) .* 3.281; % m/s to ft/s
+    vpropmaxArray(R) = vpropmax;
+    fprintf("Max propeller airspeed is %.4f ft/s for %d RPM\n", vpropmax, RPM);
+    % Check if vstall is greater than this vpropmax. If so, skip this data
+    if vstall > vpropmax
+        continue;
+    end
+    vArray(:, R) = linspace(vstall, vpropmax, vCount)';
+    % Converts motorPropAssy's v array from m/s to ft/s in-line for
+    % interpolation because vArray is in ft/s
+    TAArray(:, R) = interp1(motorPropAssy.perfData.(bc).(RPMString).v .* 3.281, motorPropAssy.perfData.(bc).(RPMString).T, vArray(:, R)) * numMotors; % N
+end
+% Converts vArray from ft/s to m/s in-line to get PA in W because TA is in N
+PAArray = TAArray .* vArray ./ 3.281; % W
 
-% Flight speed range to inspect
-% stall speed at L/W <= 1
-vstall = sqrt(W ./ CL .* 2 ./ rho ./ S); % ft/s
-V_min = min(vstall);          % Minimum velocity, ft/s
-% Set max v based on when propeller provides no more thrust
-% Values near end of array might be negative, chop em off
-posThrustMask = motorPropAssy.perfData.Battery3S.T >= 0;
-% Can assume will only chop off values on end of array, not at beginning or
-% in middle
-[~, vMaxIdx] = min(motorPropAssy.perfData.Battery3S.T(posThrustMask));
-vmax = motorPropAssy.perfData.Battery3S.v(vMaxIdx) .* 1.467; % mph to ft/s
-fprintf("max speed is %.2f ft/s\n", vmax);
-V_max = 150;         % Maximum velocity, ft/s
-numV = 20; % number of data points per curve
+% Get thrust required and power required curves
+% Need drag to get thrust required, so CD is needed
+% q is available from v, and S is known/estimated. To get CD, need cd and
+% CDi. Have cd for various angles of attack. Can get what angle of attack
+% each speed is at by calculating trim angle of attack. Will need to
+% calculate CL at those points, using qArray and L=W (level flight
+% requirement)
+% Start with qArray
+qArray = 0.5 .* rho .* vArray.^2; % slug/ft-s^2
+CLArray = W ./ qArray / S;
+% Get trim angles of attack from CL values
+alphaTrimArray = CLArray / a + alpha_L0; % rad
+CDArray = interp1(alphaDataPoscl, cdDataPoscl, alphaTrimArray);
+DArray = qArray .* CDArray * S * 4.448; % lbf to N
+TRArray = DArray; % N
+% Converts vArray from ft/s to m/s in-line to get PR in W because TR is in N
+PRArray = TRArray .* vArray ./ 3.281; % W
+% Go back and check if any columns in vArray were left at 0. This would
+% indicate that RPM value's computations were skipped because stall speed
+% exceeded vpropmax. Delete those rows
+validRPMMask = vArray(1, :) ~= 0;
+invalidRPMs = RPMArray(~validRPMMask);
+for i = 1:numel(invalidRPMs)
+    fprintf("Stall speed %.2f ft/s was greater than max propeller speed %.2f ft/s for %d RPM: ignoring data\n", vstall, vpropmaxArray(i), invalidRPMs(i));
+end
+vArray = vArray(:, validRPMMask);
+TAArray = TAArray(:, validRPMMask);
+PAArray = PAArray(:, validRPMMask);
+qArray = qArray(:, validRPMMask);
+CLArray = CLArray(:, validRPMMask);
+alphaTrimArray = alphaTrimArray(:, validRPMMask);
+CDArray = CDArray(:, validRPMMask);
+DArray = DArray(:, validRPMMask);
+TRArray = TRArray(:, validRPMMask);
+PRArray = PRArray(:, validRPMMask);
+RPMArray = RPMArray(validRPMMask);
+vpropmaxArray = (validRPMMask);
+
+%% Surfplots for T and P, available and required, vs v and RPM
+% T
+figTSurf = figure();
+axTSurf = axes(figTSurf);
+RPMMesh = repmat(RPMArray', size(vArray, 1), 1);
+grid(axTSurf, "on");
+hold(axTSurf, "on");
+view(axTSurf, 3);
+xlabel(axTSurf, "v, ft/s");
+ylabel(axTSurf, "RPM");
+zlabel(axTSurf, "TA - TR, N");
+title(axTSurf, "Excess Thrust vs RPM, v");
+surf(axTSurf, vArray, RPMMesh, TAArray - TRArray);
+
+% P
+figPSurf = figure();
+axPSurf = axes(figPSurf);
+grid(axPSurf, "on");
+hold(axPSurf, "on");
+view(axPSurf, 3);
+xlabel(axPSurf, "v, ft/s");
+ylabel(axPSurf, "RPM");
+zlabel(axPSurf, "PA - PR, W");
+title(axPSurf, "Excess Power vs RPM, v");
+surf(axPSurf, vArray, RPMMesh, PAArray - PRArray);
+
+% Debugged through here as of 10/13/2026, 2:38 am CT
 
 % Find v cruise, v for max L/D
-[~, cruiseIdx] = max(CL ./ cd_data);
-alphaCruise = alpha_data(cruiseIdx); % cruise angle of attack
+[~, cruiseIdx] = max(CL ./ CD);
+alphaCruise = rawAlphaData(cruiseIdx); % cruise angle of attack
 % Estimate how much pct higher than vstall to set vcruise, for safety buffer
 vcruiseBuffer = 20; % percent
 vcruise = vstall(cruiseIdx) .* (1 + vcruiseBuffer ./ 100);
 fprintf("vstall at cruise is %.2f ft/s, vcruise is %.1f%% higher, %.2f ft/s\n", vstall(cruiseIdx), vcruiseBuffer, vcruise);
-V_cruise = 60;       % Cruise velocity, ft/s JUST A PLACEHOLDER FOR NOW
-
-V = linspace(V_min, V_max, numV);
 
 % Leave motorPower_W = [] to suppress Power/Thrust Available plots.
 motorPower_W = (motor.perfData.I - motor.I_o) .* (1);   % Shaft power per motor in Watts
@@ -137,23 +243,18 @@ else
     PA = PA_W * 0.737562; % conversion from W to ft-lbf/s
 end           
 
-
 %% POWER REQUIRED VS VELOCITY, LEVEL FLIGHT
 
-% Level-flight lift requirement
-q = 0.5 .* rho .* V.^2;
-CL = W ./ (q .* S);
+
 
 % Required AoA
 alpha = CL ./ a + alpha_L0;
 
 % Profile drag from airfoil data
-cd = interp1(alpha_data, cd_data, alpha, 'linear', NaN);
+cd = interp1(rawAlphaData, rawcdData, alpha, 'linear', NaN);
 
 % Total drag
-CDi = CL.^2 ./ (pi .* e .* AR);
-CD = cd + CDi;
-D = q .* S .* CD;
+D = qArray .* S .* CD;
 
 % Power required
 PR = D .* V;
@@ -185,21 +286,21 @@ title('Power Required vs Velocity - Level Flight')
 
 %% POWER REQUIRED VS ANGLE OF ATTACK AT CRUISE
 
-CL_alpha = a .* (alpha_data - alpha_L0);
+CL_alpha = a .* (rawAlphaData - alpha_L0);
 CDi_alpha = CL_alpha.^2 ./ (pi .* e .* AR);
-CD_alpha = cd_data + CDi_alpha;
+CD_alpha = rawcdData + CDi_alpha;
 
-q_cruise = 0.5 * rho * V_cruise^2;
+q_cruise = 0.5 * rho * vcruise^2;
 D_alpha = q_cruise .* S .* CD_alpha;
-PR_alpha = D_alpha .* V_cruise;
+PR_alpha = D_alpha .* vcruise;
 
 figure
-plot(alpha_data, PR_alpha, 'LineWidth', 2)
+plot(rawAlphaData, PR_alpha, 'LineWidth', 2)
 hold on
 
 if ~isempty(PA)
-    PA_alpha = PA .* ones(size(alpha_data));
-    plot(alpha_data, PA_alpha, 'LineWidth', 2)
+    PA_alpha = PA .* ones(size(rawAlphaData));
+    plot(rawAlphaData, PA_alpha, 'LineWidth', 2)
     legend('Power Required', 'Power Available', 'Location', 'best')
 end
 
@@ -208,7 +309,7 @@ xlabel('Angle of Attack, \alpha (deg)')
 ylabel('Power, P (ft·lbf/s)')
 title(sprintf( ...
     'Power Required vs Angle of Attack at V_{cruise} = %.1f ft/s', ...
-    V_cruise))
+    vcruise))
 
 
 %% THRUST REQUIRED VS VELOCITY
@@ -236,14 +337,14 @@ title('Thrust Required vs Velocity - Level Flight')
 
 %% SURFACE PLOT POWER REQUIRED VS VELOCITY AND ANGLE OF ATTACK
 
-V_surface_range = linspace(V_min, V_max, numV);
+V_surface_range = linspace(vstall, vmax, vCount);
 
 [V_surface, alpha_surface] = meshgrid( ...
-    V_surface_range, alpha_data);
+    V_surface_range, rawAlphaData);
 
 CL_surface = a .* (alpha_surface - alpha_L0);
 
-cd_surface = repmat(cd_data, 1, length(V_surface_range));
+cd_surface = repmat(rawcdData, 1, length(V_surface_range));
 
 CDi_surface = CL_surface.^2 ./ (pi .* e .* AR);
 CD_surface = cd_surface + CDi_surface;
@@ -286,10 +387,10 @@ fprintf('2D Lift Curve Slope: %.4f 1/deg\n', a0);
 fprintf('Finite-Wing Lift Curve Slope: %.4f 1/deg\n', a);
 
 fprintf('Airfoil AoA Range: %.2f to %.2f deg\n', ...
-        min(alpha_data), max(alpha_data));
+        min(rawAlphaData), max(rawAlphaData));
 
 fprintf('Airfoil cd Range: %.5f to %.5f\n', ...
-        min(cd_data), max(cd_data));
+        min(rawcdData), max(rawcdData));
 
 fprintf('Valid Level-Flight Points: %d of %d\n', ...
         sum(valid), length(V));
