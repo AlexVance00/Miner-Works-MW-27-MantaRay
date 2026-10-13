@@ -4,7 +4,7 @@
 % Dependencies
 %   1) propeller_data.txt
 %   2) GetConfigData.m Version 2.1
-%   3) Various PER3_xxxx.txt files
+%   3) Possibly various propeller performance data .txt files from https://www.apcprop.com/performance-data-new/?v=0b3b97fa6688
 % -------------------------------------------------------------------------
 % Assumptions
 %   1) Performance data will come from .dat files from "Polar Diagrams" 
@@ -18,7 +18,7 @@
 %   - <Version>
 % -------------------------------------------------------------------------
 % MATLAB Version R2025a, also compatible with:
-%   - <Later Version>
+%   - R2024b
 % -------------------------------------------------------------------------
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef Propeller

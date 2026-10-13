@@ -4,11 +4,10 @@
 % Dependencies
 %   1) Propeller.m Version 1.0
 %   2) Motor.m Version 1.0
-%   3) GetConfigData.m Version 2.1
 % -------------------------------------------------------------------------
 % Assumptions
 %   1) motorConfigName and propConfigName will be 2D and the same
-%   length, but not the same shape
+%   length
 % -------------------------------------------------------------------------
 % Comments
 %   1) perfData contains performance data resulting from combining the
@@ -24,7 +23,7 @@
 %   - <Version>
 % -------------------------------------------------------------------------
 % MATLAB Version R2025a, also compatible with:
-%   - <Later Version>
+%   - R2024b
 % -------------------------------------------------------------------------
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef MotorPropAssy

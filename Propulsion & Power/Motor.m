@@ -17,7 +17,7 @@
 %   - <Version>
 % -------------------------------------------------------------------------
 % MATLAB Version R2025a, also compatible with:
-%   - <Later Version>
+%   - R2024b
 % -------------------------------------------------------------------------
 % Developed by Alex Vance (AlexVance00 on Github)
 classdef Motor
