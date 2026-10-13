@@ -8,13 +8,19 @@
 %   2) MotorPropAssy.m Version 1.0
 % -------------------------------------------------------------------------
 % Assumptions
-%   #) <Assumption>
+%   1) Reynold's number used for simulating airfoil data in XFLR5 was
+%       418699.65, Mach number used was 0.04480
+%   2) Various geometry values of the plane are estimated: c (only for Re
+%       and M estimations), b, S, W, e (Oswald efficiency factor), and
+%       eta_prop (propeller efficiency)
+%   3) Air density constant at operating altitude (all operating altitudes
+%       are low and close to each other, <= ~600 ft)
 % -------------------------------------------------------------------------
 % Sources
 %   1) http://www.braeunig.us/space/atmos.htm
 % -------------------------------------------------------------------------
 % MATLAB Version R2025a, also compatible with:
-%   - <Later Version>
+%   - R2024b
 % -------------------------------------------------------------------------
 % Developed by Alex Vance (AlexVance00 on Github) and Adrien Hartman
 % (adrienh01 on Github)
@@ -196,6 +202,13 @@ PRArray = PRArray(:, validRPMMask);
 RPMArray = RPMArray(validRPMMask);
 vpropmaxArray = (validRPMMask);
 
+% Set negative excess T and P vals to 0 for visualization convenience in
+% surfplot
+TExcessArray = TAArray - TRArray;
+TExcessArray((TExcessArray < 0)) = 0;
+PExcessArray = PAArray - PRArray;
+PExcessArray((PExcessArray < 0)) = 0;
+
 %% Surfplots for T and P, available and required, vs v and RPM
 % T
 figTSurf = figure();
@@ -208,7 +221,7 @@ xlabel(axTSurf, "v, ft/s");
 ylabel(axTSurf, "RPM");
 zlabel(axTSurf, "TA - TR, N");
 title(axTSurf, "Excess Thrust vs RPM, v");
-surf(axTSurf, vArray, RPMMesh, TAArray - TRArray);
+surf(axTSurf, vArray, RPMMesh, TExcessArray);
 
 % P
 figPSurf = figure();
@@ -220,8 +233,12 @@ xlabel(axPSurf, "v, ft/s");
 ylabel(axPSurf, "RPM");
 zlabel(axPSurf, "PA - PR, W");
 title(axPSurf, "Excess Power vs RPM, v");
-surf(axPSurf, vArray, RPMMesh, PAArray - PRArray);
+surf(axPSurf, vArray, RPMMesh, PExcessArray);
 
+flagStopThruDebugPoint = true;
+if flagStopThruDebugPoint
+    return;
+end
 % Debugged through here as of 10/13/2026, 2:38 am CT
 
 % Find v cruise, v for max L/D
