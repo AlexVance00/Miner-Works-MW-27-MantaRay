@@ -39,6 +39,7 @@ classdef MotorPropAssy
             % RPMmax:  max RPM of assy
             % nmax:    max revs/s of assy
             % v:    Speed array, m/s
+            % V:    Voltage, V
             % T:    Thrust array, N
             % P:    Power array, W
         W % weight kg
@@ -122,6 +123,24 @@ classdef MotorPropAssy
                     end
                     Scount = string(round(obj(m).motor.perfData.V(rowNumber) / MotorPropAssy.LiPoBatteryVnom));
                     obj(m).perfData.("Battery" + Scount + "S").RPMmax = obj(m).motor.perfData.RPM(rowNumber);
+                    obj(m).perfData.("Battery" + Scount + "S").nmax = obj(m).perfData.("Battery" + Scount + "S").RPMmax / 60; % n is rev/s, used in calculating other params
+                    % Estimate nominal voltage
+                    obj(m).perfData.("Battery" + Scount + "S").V = str2double(Scount) * MotorPropAssy.LiPoBatteryVnom;
+                    % Find which RPM block for the prop is closest to motor-prop combo RPMmax
+                    fields = fieldnames(obj(m).propeller.perfData);
+                    RPMs = str2double(erase(string(fields), "RPM"));
+                    [~, closestBlockNum] = min(abs(RPMs - obj(m).perfData.("Battery" + Scount + "S").RPMmax));
+                    % Now go from the 1st block through the closest
+                    % block and save that data
+                    for b = 1:closestBlockNum
+                        blockName = fields{b};
+                        blockData = obj(m).propeller.perfData.(blockName);
+                        % Store T and P data for different speeds
+                        obj(m).perfData.("Battery" + Scount + "S").(blockName).v = [blockData{3:end, 1}]' ./ 2.237; % mph to m/s
+                        obj(m).perfData.("Battery" + Scount + "S").(blockName).T = [blockData{3:end, 11}]'; % N
+                        obj(m).perfData.("Battery" + Scount + "S").(blockName).P = [blockData{3:end, 9}]'; % W
+                        obj(m).perfData.("Battery" + Scount + "S").(blockName).Pe = [blockData{3:end, 16}]'; % no units, propeller efficiency
+                    end
                 else
                     % >1 matches case
                     for r = 1:numel(rowNumber)
@@ -135,6 +154,8 @@ classdef MotorPropAssy
                         end
                         obj(m).perfData.("Battery" + Scount + "S").RPMmax = obj(m).motor.perfData.RPM(thisRowNumber);
                         obj(m).perfData.("Battery" + Scount + "S").nmax = obj(m).perfData.("Battery" + Scount + "S").RPMmax / 60; % n is rev/s, used in calculating other params
+                        % Estimate nominal voltage
+                        obj(m).perfData.("Battery" + Scount + "S").V = str2double(Scount) * MotorPropAssy.LiPoBatteryVnom;
                         % Find which RPM block for the prop is closest to motor-prop combo RPMmax
                         fields = fieldnames(obj(m).propeller.perfData);
                         RPMs = str2double(erase(string(fields), "RPM"));
@@ -146,8 +167,9 @@ classdef MotorPropAssy
                             blockData = obj(m).propeller.perfData.(blockName);
                             % Store T and P data for different speeds
                             obj(m).perfData.("Battery" + Scount + "S").(blockName).v = [blockData{3:end, 1}]' ./ 2.237; % mph to m/s
-                            obj(m).perfData.("Battery" + Scount + "S").(blockName).T = [blockData{3:end, 11}]';
-                            obj(m).perfData.("Battery" + Scount + "S").(blockName).P = [blockData{3:end, 9}]';
+                            obj(m).perfData.("Battery" + Scount + "S").(blockName).T = [blockData{3:end, 11}]'; % N
+                            obj(m).perfData.("Battery" + Scount + "S").(blockName).P = [blockData{3:end, 9}]'; % W
+                            obj(m).perfData.("Battery" + Scount + "S").(blockName).Pe = [blockData{3:end, 16}]'; % no units, propeller efficiency
                         end
                     end
                 end
