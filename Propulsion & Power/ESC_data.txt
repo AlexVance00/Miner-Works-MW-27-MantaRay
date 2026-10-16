@@ -1,0 +1,55 @@
+------------------------
+<Datatype> Data Configs.
+------------------------
+BEGIN INSTRUCTIONS
+1) Read the variable descriptions below:
+	Icont:	continuous current,				(A)
+	W:	weight,						(kg)
+	type:	"brushless" or "brushed"			(~)
+	VBEC:	BEC (battery elimination circuit) voltage	(V)
+	
+2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
+	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
+	variable, choose "<filename>" except replace <filename> with the filename of a .xlsx file that
+	stores those tabulated values. Go to tabulatedValuesTemplate.xlsx to see an example format of
+	how to set one of those up. If the values are more complicated than that and are dependent on a
+	correlation, perhaps from some research paper, choose "correlation", and that will indicate the
+	correlation is stored in that specific configs. subclass in MATLAB.
+
+\EXAMPLE\
+exampleVariableName1 = exampleValue
+exampleVariableName2 = exampleValue
+\end\
+
+3) Separate configs. as shown below
+
+\CONFIG1\
+<properties>
+\END\
+
+\CONFIG2\
+<properties>
+\END\
+
+END INSTRUCTIONS
+%
+\Aerostar_RVS_G2_20A\
+Icont = 20
+W = 0.025
+type = "brushless"
+VBEC = 6
+\END\
+
+\Cobra_22A\
+Icont = 22
+W = 0.0242
+type = "brushless"
+VBEC = 5
+\END\
+
+\Aerostar_RVS_G2_30A\
+Icont = 30
+W = 0.025
+type = "brushless"
+VBEC = 6
+\END\
