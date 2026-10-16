@@ -46,3 +46,10 @@ alpha_L0 = -5
 c_d = "E210_c_d.xlsx"
 c_l = "E210_c_l.xlsx"
 \END\
+
+\e193r3\
+a_0 = 0.0939
+alpha_L0 = -3.25
+c_d = "e193r3_c_d.xlsx"
+c_l = "e193r3_c_l.xlsx"
+\END\
