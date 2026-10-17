@@ -471,7 +471,7 @@ throttleCruise = VMotorCruise / motorPropAssy.perfData.Battery3S.V;
 % the battery is only going through the ESC during the throttling duty
 % cycle, and the two currents are related by that factor:
 IBatteryCruise = IMotorCruise * throttleCruise * numMotors;
-PLossesESCs = PPropulsion * (1/thisESC.eta - 1) * numMotors;
+PLossesESCs = PPropulsion * (1/thisESC.eta - 1);
 % And add those power losses to the total power budget, PPropulsion. Also,
 % now account for DF and calculate capacity with tMission. This capacity
 % would be the total mAh of capacity in the power plant that are estimated
@@ -613,5 +613,5 @@ fprintf('\n--- Summary ---\n---------------\n');
 fprintf('Aspect Ratio: %.3f\n', AR);
 fprintf('2D Lift Curve Slope: %.4f 1/deg\n', a0 / 180 * pi);
 fprintf('Finite-Wing Lift Curve Slope: %.4f 1/deg\n', a / 180 * pi);
-fprintf('Airfoil AoA Range: %.2f to %.2f deg\n', min(alphaDataPoscl), max(alphaDataPoscl));
+fprintf('Airfoil AoA Range: %.2f to %.2f deg\n', min(alphaDataPoscl) * 180 / pi, max(alphaDataPoscl) * 180 / pi);
 fprintf('Airfoil cd Range: %.5f to %.5f\n', min(cdDataPoscl), max(cdDataPoscl));
