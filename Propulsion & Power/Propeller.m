@@ -157,6 +157,9 @@ classdef Propeller
                 numRows = i2 - i1;
                 obj.perfData.("RPM" + thisRPM) = cell(numRows, numel(colNames));
                 obj.perfData.("RPM" + thisRPM)(1, 1:15) = cellstr(colNames);
+                % Manually calculated column, Pe or eta_prop, propeller
+                % efficiency
+                obj.perfData.("RPM" + thisRPM)(1, 16) = {"Pe"};
                 % For second row, get unit labels
                 unitLabels = split(allDataText(i1 + 2), " ");
                 unitLabels = unitLabels(unitLabels ~= "")';
@@ -164,13 +167,16 @@ classdef Propeller
                 % For rest of rows, just read raw numbers
                 for r = (i1 + 3):i2
                     thisRowData = split(allDataText(r), " ");
-                    thisRowData = thisRowData(thisRowData ~= "")';
+                    thisRowData = num2cell(str2double(thisRowData(thisRowData ~= "")'));
                     % Sometimes rows are incomplete, just delete those rows
                     if numel(thisRowData) ~= numel(colNames)
-                        obj.perfData.("RPM" + thisRPM)(r - b - ((b - 1) * numRows), 1:15) = {missing};
+                        obj.perfData.("RPM" + thisRPM)(r - b - ((b - 1) * numRows), 1:16) = {missing};
                         continue;
                     end
-                    obj.perfData.("RPM" + thisRPM)(r - b - ((b - 1) * numRows), 1:15) = num2cell(str2double(thisRowData));
+                    obj.perfData.("RPM" + thisRPM)(r - b - ((b - 1) * numRows), 1:15) = thisRowData;
+                    % Get Pe, make this the 16th column. Pe = Ct * J/Cp, Ct
+                    % is 4th col, J is 2nd col, Cp is 5th col
+                    obj.perfData.("RPM" + thisRPM)(r - b - ((b - 1) * numRows), 16) = {thisRowData{4} * thisRowData{2} / thisRowData{5}};
                 end
                 % Go back and trim out any rows with missing vals
                 emptyCellsMask = cellfun(@(c) isa(c, "missing"), obj.perfData.("RPM" + thisRPM)); % any(ismissing(obj.perfData.("RPM" + thisRPM)), 2);

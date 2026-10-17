@@ -14,6 +14,7 @@ BEGIN INSTRUCTIONS
 	d_shaft:	Shaft diameter			(m)
 	W:		Weight				(kg)
 	perfData:	performance data structure	(~)
+	type:		"brushless" or "brushed"
 	
 2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
 	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
@@ -52,6 +53,7 @@ L_shaft = 0.058
 d_shaft = 0.005
 W = 0.141
 perfData = "Cobra_C3510_16.xlsx"
+type = "brushless"
 \END\
 
 \Cobra_C3510_20\
@@ -66,4 +68,5 @@ L_shaft = 0.058
 d_shaft = 0.005
 W = 0.141
 perfData = "Cobra_C3510_20.xlsx"
+type = "brushless"
 \END\

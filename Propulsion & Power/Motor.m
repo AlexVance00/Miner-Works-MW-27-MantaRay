@@ -56,6 +56,7 @@ classdef Motor
                 y: yellow, The prop can be used, but full throttle should be kept to short bursts. (80 to 100% power)	
                 r: red, The prop is too big for the motor and should not be used. (Over 100% power)
             %}
+        type % "brushless" or "brushed"
     end
 
     methods (Access = public)
@@ -116,6 +117,7 @@ classdef Motor
                 obj(i).d_shaft = data(i).d_shaft;
                 obj(i).W = data(i).W;
                 obj(i).perfData = data(i).perfData;
+                obj(i).type = data(i).type;
             end
 
             % Make sure array of obj type is same size as configName, if
