@@ -76,7 +76,7 @@ ESCConfigName = "Aerostar_RVS_G2_30A";
 %% Data read-in
 airfoil = Airfoil(airfoilConfigName);
 motorPropAssy = MotorPropAssy(motorConfigName, propellerConfigName);
-thisESC = ESC(ESCConfigName);
+esc = ESC(ESCConfigName);
 
 % Airfoil data
 a0 = airfoil.a_0;                      % 2D lift curve slope, 1/deg
@@ -89,7 +89,7 @@ S = 10.73;           % planform area, ft^2
 W0 = 9.3 - 24 / 16;  % no-payload weight, lbf
 Wp = 24 / 16;        % payload weight, lbf
 W = W0 + Wp;         % total weight, lbf
-e = 0.67;             % Oswald efficiency factor
+e = 0.67;            % Oswald efficiency factor
 AR = b^2 / S;        % aspect ratio
 
 % Convert airfoil data units
@@ -98,24 +98,24 @@ alpha_L0 = alpha_L0 ./ 180 .* pi; % deg to rad
 rawAlphaData = rawAlphaData ./ 180 .* pi; % deg to rad
 
 % Ignore angles of attack below which cl is negative (lower than alpha_L0)
-alphaDataMaskPoscl = rawAlphaData >= alpha_L0;
-alphaDataPoscl = rawAlphaData(alphaDataMaskPoscl);
-cdDataPoscl = rawcdData(alphaDataMaskPoscl);
+alphaDataPosclMask = rawAlphaData >= alpha_L0;
+alphaDataPoscl = rawAlphaData(alphaDataPosclMask);
+cdDataPoscl = rawcdData(alphaDataPosclMask);
 
 % Motor data
 eta_prop = 0.8;
 numMotors = 2;
-installedThrustLosses = 20 / 100; % percent to multiplier
+installedThrustLosses = 20 / 100; % percent to fraction
 % Include sweep angle to optionally account for motors being installed in
 % slight off-axial direction, perpendicular to wing leading edge rather
 % than straight ahead, pointing parallel with nose/body axis
 sweepAngle = 25 / 180 * pi; % deg to rad
 flagCountSweepAngleThrustLosses = true;
 if flagCountSweepAngleThrustLosses
-    sweepAngleThrustLosses = 1 - cos(sweepAngle); % multiplier, NOT percent. Basically, the
+    sweepAngleThrustLosses = 1 - cos(sweepAngle); % fraction, NOT percent. Basically, the
                                               % fraction of thrust that's lost due to thrust
                                               % vector not being perfectly in line with
-                                              % vehicle's direction of travel
+                                              % vehicle's direction of travel,
 else
     sweepAngleThrustLosses = 0;
 end
@@ -132,12 +132,11 @@ rho = 0.0023769;     % Sea level air density, slug/ft^3
 %% WITH PAYLOAD (ADD NO-PAYLOAD SECTION LATER)
 % Calculate thrust available and power available curves
 % Thrust available depends on RPM and speed
-% For thrust available curve, want max thrust available, which would be for
-% max RPM. Then sweep across speeds
+% Sweep across speeds, then 
 % Use RPM value from motor data table in the row where the imported
 % propeller can be found. Will be stored in performance data of
 % motorPropAssy
-% Will need to specify what range of velocities we care about. vstall
+% Will need to specify what range of velocities we care about. vstall   
 % through vpropmax
 % Get stall speed, speed at CLmax where L=W
 % Get a from a0, e, and AR
@@ -148,11 +147,11 @@ fprintf("Max CL is %.4f\n", CLmax);
 vstall = sqrt(W ./ CLmax .* 2 ./ rho ./ S); % ft/s
 fprintf("Stall speed is %.4f ft/s\n", vstall);
 bcs = string(fieldnames(motorPropAssy.perfData)); % bcs - batteryConfigs
-for bc = 1:numel(bcs)
-    fprintf("Max RPM of propeller %s with motor %s for battery config %s is %d RPM\n", motorPropAssy.propeller.name, motorPropAssy.motor.name, erase(bcs(bc), "Battery"), motorPropAssy.perfData.(bcs(bc)).RPMmax);
+for bc = bcs
+    fprintf("Max RPM of propeller %s with motor %s for battery config %s is %d RPM\n", motorPropAssy.propeller.name, motorPropAssy.motor.name, erase(bc, "Battery"), motorPropAssy.perfData.(bc).RPMmax);
 end
 vCount = 20; % number of speeds to sweep through
-%% Sweep through all valid RPM blocks
+%% Sweep through all valid RPM blocks and do data for each speed data value in parallel
 % This will get 2D array of TA, PA, TR, and PR vals for varying v and RPM
 % vals. Will surf plot later
 flagJustCheckFirstBC = true; % True: just reads data for first battery config
@@ -471,7 +470,7 @@ throttleCruise = VMotorCruise / motorPropAssy.perfData.Battery3S.V;
 % the battery is only going through the ESC during the throttling duty
 % cycle, and the two currents are related by that factor:
 IBatteryCruise = IMotorCruise * throttleCruise * numMotors;
-PLossesESCs = PPropulsion * (1/thisESC.eta - 1);
+PLossesESCs = PPropulsion * (1/esc.eta - 1);
 % And add those power losses to the total power budget, PPropulsion. Also,
 % now account for DF and calculate capacity with tMission. This capacity
 % would be the total mAh of capacity in the power plant that are estimated
@@ -487,7 +486,7 @@ fprintf("Required power plant capacity for propulsion system with design factor 
 % https://www.getfpv.com/radios/receivers/frsky-archer-r10-2-4ghz-receiver.html
 WReceiver = 0.013; % kg
 IReceiver = 0.1; % A
-VReceiver = thisESC.VBEC;
+VReceiver = esc.VBEC;
 PReceiver = IReceiver * VReceiver;
 capacityReceiver = IReceiver * tMission / 3600 * 1000; % mAh
 %% ---------------------------------------------------------------------------- %%
@@ -528,7 +527,7 @@ fprintf("Net required power plant capacity with design factor of %.2f over missi
 %% ---- In future, add functionality for accounting for battery analytically ---- %%
 % Spektrum 2200 mAh 3S 30C LiPOo
 % https://www.horizonhobby.com/product/spektrum-11.1v-2200mah-3s-30c-smart-g2-lipo-battery-ic3/SPMX223S30.html
-WBattery = 0.225;
+WBattery = 0.225; % kg
 capacityBattery = 2200; % mAh
 CRateBattery = 30; % Charge/discharge rate, C or 1/hr
 fprintf("Battery capacity is %.1f mAh\n", capacityBattery);
@@ -536,7 +535,7 @@ fprintf("Battery capacity is %.1f mAh\n", capacityBattery);
 % Used estimate weights from Meeks' slides for 2 high torque servos, 4
 % "general use" servos, and 2 micro servos
 WServos = 2 * 2.35 + 4 * 1.55 + 2 * 0.4; % oz
-WPowerPlant = (motorPropAssy.W + thisESC.W) * numMotors * 35.274 + WServos + WReceiver * 35.274 + WBattery * 35.274; % Converts kg to oz for motor, prop, the receiver term, and the battery term
+WPowerPlant = (motorPropAssy.W + esc.W) * numMotors * 35.274 + WServos + WReceiver * 35.274 + WBattery * 35.274; % Converts kg to oz for motor, prop, the receiver term, and the battery term
 fprintf("Power plant weighs %.2f oz\n", WPowerPlant);
 ICapability = CRateBattery * capacityBattery / 1000; % mA to A
 fprintf("Max possible current draw is %.2f A\n", ICapability);
