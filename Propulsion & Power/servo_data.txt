@@ -1,0 +1,56 @@
+-----------------------
+Servo Data Configs.
+------------------------
+BEGIN INSTRUCTIONS
+1) Read the variable descriptions below:
+	W:		Weight,			(kg)
+	I_Stall_6V:		Stall load current at 6V,   (A)
+    I_Stall_7_4V:		Stall load current at 7.4V, (A)
+	I_NoLoad_6V:		No load current at 6V,  (A)
+    I_NoLoad_7_4V:		No load current at 7.4V,    (A)
+	V_min:		Min voltage draw		(V)
+	V_max:		Max voltage draw        (V)
+	
+2) To add a new config., copy the format below. If the variable value isn't a constant, set the value
+	to "<filename>" or "correlation". If they are tabulated values dependent on some other independent
+	variable, choose "<filename>" except replace <filename> with the filename of a .xlsx file that
+	stores those tabulated values. Go to tabulatedValuesTemplate.xlsx to see an example format of
+	how to set one of those up. If the values are more complicated than that and are dependent on a
+	correlation, perhaps from some research paper, choose "correlation", and that will indicate the
+	correlation is stored in that specific configs. subclass in MATLAB.
+
+\EXAMPLE\
+exampleVariableName1 = exampleValue
+exampleVariableName2 = exampleValue
+\end\
+
+3) Separate configs. as shown below
+
+\CONFIG1\
+<properties>
+\END\
+
+\CONFIG2\
+<properties>
+\END\
+
+END INSTRUCTIONS
+%
+\Servo1\
+W:
+I_Stall_6V:
+I_Stall_7_4V:
+I_NoLoad_6V:
+I_NoLoad_7_4V:
+V_min:
+V_max:
+
+\Servo2\
+W:
+I_Stall_6V:
+I_Stall_7_4V:
+I_NoLoad_6V:
+I_NoLoad_7_4V:
+V_min:
+V_max:
+\END\
