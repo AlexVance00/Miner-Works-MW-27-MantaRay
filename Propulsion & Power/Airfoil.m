@@ -111,7 +111,7 @@ classdef Airfoil
                     if data(i).c_l == "flagCorrelation"
                         % If so, call the Getc_l() method
                         alpha = obj(i).c_d.alpha;
-                        obj(i).c_l = struct("alpha", alpha, "c_l", Getc_l(alpha));
+                        obj(i).c_l = struct("alpha", alpha, "c_l", obj(i).Getc_l(alpha));
                     else
                         % If not, its value was set to some string which is
                         % wrong
@@ -122,6 +122,7 @@ classdef Airfoil
                 else
                     error("Invalid value ""%s"" set to c_l variable for ""%s"" config in ""%s""", data(i).c_l, thisConfigName, configFile);
                 end
+
             end
 
             % Make sure array of obj type is same size as configName, if
@@ -136,7 +137,7 @@ classdef Airfoil
 
     methods (Access = private)
 
-        function c_l = Getc_l(alpha)
+        function c_l = Getc_l(obj, alpha)
         % Calculates c_l based on alpha using airfoil object properties
         % -----------------------------------------------------------------
             c_l = obj.a_0 .* (alpha - obj.alpha_L0);
