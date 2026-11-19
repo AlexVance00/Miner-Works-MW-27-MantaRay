@@ -80,7 +80,7 @@ classdef MotorPropAssy
             if ~isvector(motorConfigName)
                 error("motorConfigName was not passed in as vector\n");
             elseif ~isvector(propConfigName)
-                error("motorConfigName was not passed in as vector\n");
+                error("propConfigName was not passed in as vector\n");
             end
 
             numMotors = numel(motorConfigName);
