@@ -10,7 +10,7 @@
 % -------------------------------------------------------------------------
 % Comments
 %   1) Vectorized. Pass in configName as an array and a same-sized array of
-%       Motor objects will be returned
+%       ESC objects will be returned
 % -------------------------------------------------------------------------
 % Document Version 1.0, earlier versions:
 %   - <Version>
@@ -75,7 +75,7 @@ classdef ESC
             flagMultipleConfigNames = false;
             if numConfigNames ~= 1
                 flagMultipleConfigNames = true;
-                obj(numConfigNames) = Motor();
+                obj(numConfigNames) = ESC();
             end
 
             % Assign obj properties values from data's fields for each
