@@ -16,7 +16,8 @@ function data = GetConfigData(args)
 % Assumptions
 %   #) <Assumption>
 % -------------------------------------------------------------------------
-% Document Version 2.1, former versions:
+% Document Version 2.2, former versions:
+%   - 2.1
 %   - 2.0
 %   - 1.0
 % -------------------------------------------------------------------------
@@ -68,8 +69,9 @@ function data = GetConfigData(args)
         end
     end
 
-    % Search MATLAB path for configFile, store matches
-    configFileSearchMatches = dir(fullfile(pwd, "**", configFile));
+    % Search project directory for configFile, store matches
+    projectRoot = fileparts(mfilename("fullpath"));
+    configFileSearchMatches = dir(fullfile(projectRoot, "**", configFile));
 
     % Check if no matches were found
     if isempty(configFileSearchMatches)
