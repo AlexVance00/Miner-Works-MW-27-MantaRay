@@ -76,7 +76,7 @@ function data = GetConfigData(args)
     % Check if no matches were found
     if isempty(configFileSearchMatches)
         % If none were found, throw error- it needs to be found
-        error("Config file ""%s"" not found in working directory ""%s""\n", configFile, pwd);
+        error("Config file ""%s"" not found in project directory ""%s""\n", configFile, projectRoot);
     end
 
     % If there's a match, continue. Use first match found, ignore
@@ -130,7 +130,7 @@ function data = GetConfigData(args)
             else
                 % If this line's value was a string, check for whether it was a
                 % filename or "correlation"
-                fileSearchMatches = dir(fullfile(pwd, "**", lastValue));
+                fileSearchMatches = dir(fullfile(projectRoot, "**", lastValue));
                 % If any matches were folders, not files (because dir doesn't
                 % know the difference), remove them
                 fileSearchMatches = fileSearchMatches(~[fileSearchMatches.isdir]);
